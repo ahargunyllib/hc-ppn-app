@@ -16,3 +16,7 @@ tasks:
   lint:
     command: "moon run :lint"
     description: "Run linters on all projects"
+
+  format:
+    command: "moon run :format"
+    description: "Format code in all projects"

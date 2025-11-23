@@ -1,7 +1,9 @@
+.PHONY: install dev build lint format
+
 install:
-	set -e
-	go mod download
-	go install github.com/air-verse/air@latest
+	set -e; \
+	go mod download; \
+	go install github.com/air-verse/air@latest; \
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 dev:

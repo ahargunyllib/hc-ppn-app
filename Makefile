@@ -1,4 +1,4 @@
-.PHONY: dev build sync
+.PHONY: dev build sync lint format
 
 dev:
 	moon :dev
