@@ -1,3 +1,5 @@
+.PHONY: dev build sync
+
 dev:
 	moon :dev
 
