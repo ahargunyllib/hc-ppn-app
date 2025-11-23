@@ -18,3 +18,15 @@ tasks:
     description: "Sync Go module dependencies"
     options:
       runInCI: false
+
+  lint:
+    command: "make lint"
+    description: "Run golangci-lint on the project"
+    options:
+      runInCI: true
+
+  format:
+    command: "make format"
+    description: "Format Go code using go fmt"
+    options:
+      runInCI: true

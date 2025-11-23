@@ -11,4 +11,7 @@ build:
 	go build -o ./bin/bot-service ./cmd/app/main.go
 
 lint:
-	golangci-lint run ./...
+	golangci-lint run
+
+format:
+	go fmt ./...

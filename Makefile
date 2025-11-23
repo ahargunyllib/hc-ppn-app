@@ -9,4 +9,10 @@ build:
 sync:
 	moon :sync
 
+lint:
+	moon :lint
+
+format:
+	moon :format
+
 # TODO: Docker Commands

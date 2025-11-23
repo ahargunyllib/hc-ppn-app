@@ -16,3 +16,8 @@ pre-commit:
       glob:
         - "*.go"
       stage_fixed: true
+
+    - run: go fmt ./...
+      glob:
+        - "*.go"
+      stage_fixed: true

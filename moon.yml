@@ -12,3 +12,7 @@ tasks:
   sync:
     command: "moon run :sync"
     description: "Sync project dependencies"
+
+  lint:
+    command: "moon run :lint"
+    description: "Run linters on all projects"
