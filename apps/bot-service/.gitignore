@@ -1,0 +1,22 @@
+.env
+.env.*
+!.env.example
+
+# ignore air (live reload) files
+.air.toml
+tmp
+
+# ignore git files
+.git
+
+# ignore build files
+/bin
+
+# test files
+coverage.*
+
+# seeders
+data/seeders/prod
+
+# log
+*.log

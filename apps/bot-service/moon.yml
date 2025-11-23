@@ -1,0 +1,20 @@
+id: bot-service
+language: go
+
+tasks:
+  dev:
+    command: "make dev"
+    options:
+      runInCI: false
+
+  build:
+    command: "make build"
+    description: "Build bot-service app"
+    options:
+      runInCI: false
+
+  sync:
+    command: "make install"
+    description: "Sync Go module dependencies"
+    options:
+      runInCI: false

@@ -1,0 +1,14 @@
+# https://moonrepo.dev/docs/config/project
+
+tasks:
+  dev:
+    command: "moon run :dev"
+    description: "Start development servers for all projects"
+
+  build:
+    command: "moon run :build"
+    description: "Build all projects"
+
+  sync:
+    command: "moon run :sync"
+    description: "Sync project dependencies"
