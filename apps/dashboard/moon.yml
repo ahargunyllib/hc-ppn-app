@@ -1,0 +1,32 @@
+id: dashboard
+language: typescript
+
+tasks:
+  dev:
+    command: "pnpm dev"
+    options:
+      runInCI: false
+
+  build:
+    command: "pnpm build"
+    description: "Build dashboard app"
+    options:
+      runInCI: false
+
+  sync:
+    command: "pnpm install"
+    description: "Sync project dependencies"
+    options:
+      runInCI: false
+
+  lint:
+    command: "pnpm dlx ultracite check"
+    description: "Run ultracite linter on the project"
+    options:
+      runInCI: true
+
+  format:
+    command: "pnpm dlx ultracite fix"
+    description: "Format code using ultracite"
+    options:
+      runInCI: true
