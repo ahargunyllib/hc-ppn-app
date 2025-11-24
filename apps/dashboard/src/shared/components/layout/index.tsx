@@ -1,4 +1,5 @@
 import { ToastProvider } from "@/shared/components/ui/toast";
+import AuthProvider from "@/shared/hooks/use-auth";
 
 type Props = {
   children: React.ReactNode;
@@ -7,7 +8,9 @@ type Props = {
 export default function Layout({ children }: Props) {
   return (
     <div className="isolate">
-      <ToastProvider>{children}</ToastProvider>
+      <AuthProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </AuthProvider>
     </div>
   );
 }
