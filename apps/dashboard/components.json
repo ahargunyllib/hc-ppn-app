@@ -19,6 +19,6 @@
     "hooks": "@/shared/hooks"
   },
   "registries": {
-    "@reui": "https://reui.io/r/{name}.json"
+    
   }
 }
