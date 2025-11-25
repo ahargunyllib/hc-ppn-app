@@ -275,7 +275,7 @@ func TestUserService_List(t *testing.T) {
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
-				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter entity.GetUsersFilter) ([]entity.User, int64, error) {
+				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter *entity.GetUsersFilter) ([]entity.User, int64, error) {
 					assert.Equal(t, 0, filter.Offset)
 					assert.Equal(t, 10, filter.Limit)
 					return testUsers, 2, nil
@@ -296,7 +296,7 @@ func TestUserService_List(t *testing.T) {
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
-				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter entity.GetUsersFilter) ([]entity.User, int64, error) {
+				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter *entity.GetUsersFilter) ([]entity.User, int64, error) {
 					assert.Equal(t, 20, filter.Offset)
 					assert.Equal(t, 20, filter.Limit)
 					return testUsers, int64(40), nil
@@ -318,7 +318,7 @@ func TestUserService_List(t *testing.T) {
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
-				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter entity.GetUsersFilter) ([]entity.User, int64, error) {
+				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter *entity.GetUsersFilter) ([]entity.User, int64, error) {
 					assert.Equal(t, "test", filter.Search)
 					return testUsers, int64(2), nil
 				})
@@ -339,7 +339,7 @@ func TestUserService_List(t *testing.T) {
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
-				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter entity.GetUsersFilter) ([]entity.User, int64, error) {
+				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter *entity.GetUsersFilter) ([]entity.User, int64, error) {
 					assert.Equal(t, &assignedTo, filter.AssignedTo)
 					return testUsers, int64(2), nil
 				})
