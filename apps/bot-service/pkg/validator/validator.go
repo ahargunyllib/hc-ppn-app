@@ -74,44 +74,45 @@ func (v *CustomValidatorStruct) Validate(data interface{}) ValidationErrors {
 			}
 
 			for _, err := range valErrs {
-				field, _ := dataType.FieldByName(err.StructField())
+				field, ok := dataType.FieldByName(err.StructField())
+				if !ok {
+					// Handle nested struct case or use struct field name directly
+					other.Fields[err.StructField()] = FieldError{
+						Tag:     err.Tag(),
+						Message: err.Translate(v.trans),
+					}
+					continue
+				}
+
 				tag, fieldName := getTagAndFieldName(field)
 
 				if tag == "json" {
-					body.Fields = map[string]FieldError{
-						fieldName: {
-							Tag:     err.Tag(),
-							Message: err.Translate(v.trans),
-						},
+					body.Fields[fieldName] = FieldError{
+						Tag:     err.Tag(),
+						Message: err.Translate(v.trans),
 					}
 					continue
 				}
 
 				if tag == "param" {
-					param.Fields = map[string]FieldError{
-						fieldName: {
-							Tag:     err.Tag(),
-							Message: err.Translate(v.trans),
-						},
+					param.Fields[fieldName] = FieldError{
+						Tag:     err.Tag(),
+						Message: err.Translate(v.trans),
 					}
 					continue
 				}
 
 				if tag == "query" {
-					query.Fields = map[string]FieldError{
-						fieldName: {
-							Tag:     err.Tag(),
-							Message: err.Translate(v.trans),
-						},
+					query.Fields[fieldName] = FieldError{
+						Tag:     err.Tag(),
+						Message: err.Translate(v.trans),
 					}
 					continue
 				}
 
-				other.Fields = map[string]FieldError{
-					fieldName: {
-						Tag:     err.Tag(),
-						Message: err.Translate(v.trans),
-					},
+				other.Fields[fieldName] = FieldError{
+					Tag:     err.Tag(),
+					Message: err.Translate(v.trans),
 				}
 			}
 
