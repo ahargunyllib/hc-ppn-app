@@ -17,6 +17,10 @@ on:
       - 'apps/bot-service/**'
       - '.github/workflows/go-test.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Run Tests
