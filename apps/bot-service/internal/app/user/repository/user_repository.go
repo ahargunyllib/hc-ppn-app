@@ -97,7 +97,7 @@ func (r *userRepository) List(ctx context.Context, filter *entity.GetUsersFilter
 	}
 
 	var total int64
-	err := r.db.GetContext(ctx, &total, "SELECT COUNT(*) FROM users WHERE 1=1" + whereClauses.String(), args...)
+	err := r.db.GetContext(ctx, &total, "SELECT COUNT(*) FROM users WHERE 1=1"+whereClauses.String(), args...)
 	if err != nil {
 		return nil, 0, errx.ErrInternalServer.WithLocation("userRepository.List.Count").WithError(err)
 	}
@@ -138,8 +138,21 @@ func (r *userRepository) Update(ctx context.Context, user *entity.User) error {
 	)
 
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			return errx.ErrUserPhoneExists.WithError(err)
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			pgErrors := []pg.PgError{
+				{
+					Code:           pg.UniqueViolation,
+					ConstraintName: "users_phone_number_key",
+					Err: errx.ErrUserPhoneExists.WithDetails(map[string]any{
+						"phone_number": user.PhoneNumber,
+					}).WithLocation("userRepository.Update"),
+				},
+			}
+
+			if customPgErr := pg.HandlePgError(pgErr, pgErrors); customPgErr != nil {
+				return customPgErr
+			}
 		}
 
 		return errx.ErrInternalServer.WithLocation("userRepository.Update").WithError(err)
@@ -151,7 +164,9 @@ func (r *userRepository) Update(ctx context.Context, user *entity.User) error {
 	}
 
 	if rowsAffected == 0 {
-		return errx.ErrUserNotFound
+		return errx.ErrUserNotFound.WithDetails(map[string]any{
+			"id": user.ID,
+		}).WithLocation("userRepository.Update")
 	}
 
 	return nil
@@ -171,7 +186,9 @@ func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if rowsAffected == 0 {
-		return errx.ErrUserNotFound
+		return errx.ErrUserNotFound.WithDetails(map[string]any{
+			"id": id,
+		}).WithLocation("userRepository.Delete")
 	}
 
 	return nil
