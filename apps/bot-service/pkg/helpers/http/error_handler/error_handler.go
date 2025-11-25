@@ -34,7 +34,11 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 
 	var fiberErr *fiber.Error
 	if errors.As(err, &fiberErr) {
-		return response.SendResponse(c, fiberErr.Code, fiber.Map{})
+		return response.SendResponse(c, fiberErr.Code, fiber.Map{
+			"error": fiber.Map{
+				"message": fiberErr.Message,
+			},
+		})
 	}
 
 	return response.SendResponse(c, fiber.StatusInternalServerError, errx.ErrInternalServer.WithError(err))
