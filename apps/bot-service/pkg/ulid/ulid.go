@@ -9,6 +9,8 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+//go:generate mockgen -destination=mock/mock_ulid.go -package=mock github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/ulid CustomULIDInterface
+
 type CustomULIDInterface interface {
 	New() (ulid.ULID, error)
 }

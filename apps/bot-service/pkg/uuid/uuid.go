@@ -5,6 +5,8 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -destination=mock/mock_uuid.go -package=mock github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/uuid UUIDInterface
+
 type UUIDInterface interface {
 	NewV7() (uuid.UUID, error)
 	Parse(string) (uuid.UUID, error)

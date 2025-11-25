@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -destination=../../internal/app/user/repository/mock/mock_user_repository.go -package=mock github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/contracts UserRepository
+
 type UserRepository interface {
 	Create(ctx context.Context, user *entity.User) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
