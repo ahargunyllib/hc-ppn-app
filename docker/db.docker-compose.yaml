@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16.1-alpine
+    container_name: hc-ppn-postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=hc_ppn_app
+    volumes:
+      - hc-ppn-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U postgres -d hc_ppn_app'"]
+      start_interval: 5s
+      start_period: 5s
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  hc-ppn-postgres-data:
