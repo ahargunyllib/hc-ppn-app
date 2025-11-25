@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -destination=mock/mock_jwt.go -package=mock github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/jwt CustomJwtInterface
+
 type CustomJwtInterface interface {
 	Create() (string, error)
 	Decode(tokenString string, claims *Claims) error

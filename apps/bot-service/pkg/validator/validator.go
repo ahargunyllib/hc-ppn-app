@@ -13,6 +13,8 @@ import (
 	enTranslations "github.com/go-playground/validator/v10/translations/en"
 )
 
+//go:generate mockgen -destination=mock/mock_validator.go -package=mock github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/validator CustomValidatorInterface
+
 type CustomValidatorInterface interface {
 	Validate(data interface{}) ValidationErrors
 }

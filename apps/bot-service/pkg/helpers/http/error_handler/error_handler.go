@@ -14,7 +14,7 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 	var valErr validator.ValidationErrors
 	if errors.As(err, &valErr) {
 		return response.SendResponse(c, fiber.StatusUnprocessableEntity, map[string]any{
-			"error":      fiber.Map{
+			"error": fiber.Map{
 				"message":    "Validation error",
 				"error_code": "VALIDATION_ERROR",
 				"details":    valErr,

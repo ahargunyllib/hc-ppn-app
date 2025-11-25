@@ -1,10 +1,16 @@
 package server
 
 import (
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/controller"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/repository"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/service"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/middlewares"
 	errorhandler "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/helpers/http/error_handler"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/helpers/http/response"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/jwt"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/log"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/uuid"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/validator"
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -65,9 +71,11 @@ func (s *httpServer) MountMiddlewares() {
 }
 
 func (s *httpServer) MountRoutes(db *sqlx.DB) {
-	// validator := validator.Validator
-	// uuid := uuid.UUID
-	// ulid := ulid.ULID
+	jwtService := jwt.Jwt
+	validatorService := validator.Validator
+	uuidService := uuid.UUID
+
+	middleware := middlewares.NewMiddleware(jwtService)
 
 	s.app.Get("/", func(c *fiber.Ctx) error {
 		return response.SendResponse(c, fiber.StatusOK, "HC PPN Backend is running")
@@ -80,7 +88,11 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 		return response.SendResponse(c, fiber.StatusOK, "HC PPN Backend is running")
 	})
 
-	// middleware := middlewares.NewMiddleware()
+	userRepo := repository.NewUserRepository(db)
+
+	userService := service.NewUserService(userRepo, validatorService, uuidService)
+
+	controller.InitUserController(v1, userService, middleware)
 
 	s.app.Use(func(c *fiber.Ctx) error {
 		return response.SendResponse(c, fiber.StatusNotFound, "Route not found")

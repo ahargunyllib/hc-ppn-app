@@ -1,0 +1,38 @@
+name: Go Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - 'apps/bot-service/**'
+      - '.github/workflows/go-test.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: apps/bot-service/go.sum
+
+      - name: Run tests
+        uses: robherley/go-test-action@v0
+        with:
+          moduleDirectory: apps/bot-service
+          testArguments: ./internal/app/...
