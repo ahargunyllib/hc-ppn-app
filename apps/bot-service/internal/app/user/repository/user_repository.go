@@ -78,30 +78,34 @@ func (r *userRepository) List(ctx context.Context, filter *entity.GetUsersFilter
 	limit := min(max(filter.Limit, 10), 100)
 
 	var qb strings.Builder
+	var whereClauses strings.Builder
 	var args []any
 
 	qb.WriteString(`
 		SELECT id, phone_number, label, assigned_to, notes, created_at, updated_at
 		FROM users
-		WHERE 1=1
 	`)
 
 	if filter.Search != "" {
-		qb.WriteString(fmt.Sprintf(" AND (phone_number ILIKE $%d OR label ILIKE $%d)", len(args)+1, len(args)+1))
+		whereClauses.WriteString(fmt.Sprintf(" AND (phone_number ILIKE $%d OR label ILIKE $%d)", len(args)+1, len(args)+1))
 		args = append(args, "%"+filter.Search+"%")
 	}
 
 	if filter.AssignedTo != nil && *filter.AssignedTo != "" {
-		qb.WriteString(fmt.Sprintf(" AND assigned_to = $%d", len(args)+1))
+		whereClauses.WriteString(fmt.Sprintf(" AND assigned_to = $%d", len(args)+1))
 		args = append(args, *filter.AssignedTo)
 	}
 
 	var total int64
-	err := r.db.GetContext(ctx, &total, qb.String(), args...)
+	err := r.db.GetContext(ctx, &total, "SELECT COUNT(*) FROM users WHERE 1=1" + whereClauses.String(), args...)
 	if err != nil {
 		return nil, 0, errx.ErrInternalServer.WithLocation("userRepository.List.Count").WithError(err)
 	}
 
+	if whereClauses.Len() > 0 {
+		qb.WriteString(" WHERE 1=1")
+		qb.WriteString(whereClauses.String())
+	}
 	qb.WriteString(" ORDER BY created_at DESC")
 	qb.WriteString(fmt.Sprintf(" LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2))
 
