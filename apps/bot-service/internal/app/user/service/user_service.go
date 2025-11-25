@@ -63,7 +63,7 @@ func (s *UserService) GetByID(ctx context.Context, param *dto.GetUserByIDParam) 
 	userRes := dto.ToUserResponse(user)
 
 	res := &dto.GetUserByIDResponse{
-		User: *userRes,
+		User: userRes,
 	}
 
 	return res, nil
@@ -91,7 +91,7 @@ func (s *UserService) List(ctx context.Context, query *dto.GetUsersQuery) (*dto.
 
 	userResponses := make([]dto.UserResponse, 0, len(users))
 	for i := range users {
-		userResponses = append(userResponses, *dto.ToUserResponse(&users[i]))
+		userResponses = append(userResponses, dto.ToUserResponse(&users[i]))
 	}
 
 	paginationResponse := dto.NewPaginationResponse(total, page, limit)

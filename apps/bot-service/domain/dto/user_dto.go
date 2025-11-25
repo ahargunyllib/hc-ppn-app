@@ -16,8 +16,8 @@ type UserResponse struct {
 	UpdatedAt   string  `json:"updatedAt"`
 }
 
-func ToUserResponse(user *entity.User) *UserResponse {
-	return &UserResponse{
+func ToUserResponse(user *entity.User) UserResponse {
+	return UserResponse{
 		ID:          user.ID.String(),
 		PhoneNumber: user.PhoneNumber,
 		Label:       user.Label,

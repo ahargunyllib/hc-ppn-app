@@ -8,6 +8,15 @@ type PaginationResponse struct {
 }
 
 func NewPaginationResponse(totalData int64, page, limit int) PaginationResponse {
+	if limit <= 0 {
+		return PaginationResponse{
+			TotalData: totalData,
+			TotalPage: 0,
+			Page:      page,
+			Limit:     limit,
+		}
+	}
+
 	totalPage := int(totalData) / limit
 	if int(totalData)%limit != 0 {
 		totalPage++
