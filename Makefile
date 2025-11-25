@@ -1,4 +1,4 @@
-.PHONY: dev build sync lint format
+.PHONY: dev build sync lint format db-up db-down
 
 dev:
 	moon :dev
@@ -15,4 +15,8 @@ lint:
 format:
 	moon :format
 
-# TODO: Docker Commands
+db-up:
+	docker-compose -f docker/db.docker-compose.yaml up -d
+
+db-down:
+	docker-compose -f docker/db.docker-compose.yaml down
