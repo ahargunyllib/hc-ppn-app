@@ -11,7 +11,7 @@ import (
 )
 
 type HTTPServer interface {
-	Start(part string)
+	Start(port string)
 	MountMiddlewares()
 	MountRoutes(db *sqlx.DB)
 	GetApp() *fiber.App
