@@ -22,10 +22,6 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: apps/bot-service
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,8 +32,8 @@ jobs:
           go-version: '1.25'
           cache-dependency-path: apps/bot-service/go.sum
 
-      - name: Download dependencies
-        run: go mod download
-
       - name: Run tests
         uses: robherley/go-test-action@v0
+        with:
+          moduleDirectory: apps/bot-service
+          testArguments: ./...
