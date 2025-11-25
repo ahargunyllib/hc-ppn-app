@@ -84,7 +84,7 @@ func (s *UserService) List(ctx context.Context, query *dto.GetUsersQuery) (*dto.
 		AssignedTo: query.AssignedTo,
 	}
 
-	users, total, err := s.userRepo.List(ctx, filter)
+	users, total, err := s.userRepo.List(ctx, &filter)
 	if err != nil {
 		return nil, err
 	}

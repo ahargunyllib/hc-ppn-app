@@ -73,30 +73,7 @@ func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Us
 	return &user, nil
 }
 
-func (r *userRepository) FindByPhoneNumber(ctx context.Context, phoneNumber string) (*entity.User, error) {
-	query := `
-		SELECT id, phone_number, label, assigned_to, notes, created_at, updated_at
-		FROM users
-		WHERE phone_number = $1
-	`
-
-	var user entity.User
-	err := r.db.GetContext(ctx, &user, query, phoneNumber)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errx.ErrUserNotFound.WithDetails(map[string]any{
-				"phone_number": phoneNumber,
-			}).WithLocation("userRepository.FindByPhoneNumber")
-		}
-
-		return nil, errx.ErrInternalServer.WithLocation("userRepository.FindByPhoneNumber").WithError(err)
-	}
-
-	return &user, nil
-}
-
-func (r *userRepository) List(ctx context.Context, filter entity.GetUsersFilter) ([]entity.User, int64, error) {
+func (r *userRepository) List(ctx context.Context, filter *entity.GetUsersFilter) ([]entity.User, int64, error) {
 	offset := min(max(filter.Offset, 0), 10000)
 	limit := min(max(filter.Limit, 10), 100)
 
