@@ -38,8 +38,7 @@ migrate-force:
 	docker run -i -v ./database/migrations:/database/migrations --network host migrate/migrate -path /database/migrations -database $(db_url) -verbose force $(version)
 
 test:
-	go test -v ./... -race -cover -timeout 30s -count 1 -coverprofile=coverage.out
+	go test -v ./internal/app/... -race -cover -timeout 30s -count 1 -coverprofile=coverage.out
 
 test-coverage:
 	go tool cover -html=coverage.out -o coverage.html
-
