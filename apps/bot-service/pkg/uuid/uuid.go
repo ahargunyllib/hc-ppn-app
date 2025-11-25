@@ -7,6 +7,7 @@ import (
 
 type UUIDInterface interface {
 	NewV7() (uuid.UUID, error)
+	Parse(string) (uuid.UUID, error)
 }
 
 type UUIDStruct struct{}
@@ -29,4 +30,18 @@ func (u *UUIDStruct) NewV7() (uuid.UUID, error) {
 	}
 
 	return id, err
+}
+
+func (u *UUIDStruct) Parse(idStr string) (uuid.UUID, error) {
+	id, err := uuid.Parse(idStr)
+
+	if err != nil {
+		log.Error(log.CustomLogInfo{
+			"error": err.Error(),
+		}, "[UUID][Parse] failed to parse uuid from string")
+
+		return uuid.Nil, err
+	}
+
+	return id, nil
 }
