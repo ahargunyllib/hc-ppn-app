@@ -1,23 +1,71 @@
-import { useState } from "react";
-import "./app.css";
+import { AnalyticsDashboard } from "@/features/analytics/analytics-dashboard";
+import { FeedbackDashboard } from "@/features/feedback/feedback-dashboard";
+import { PhoneNumbersManagement } from "@/features/phone-numbers/phone-numbers-management";
+import Layout from "@/shared/components/layout";
+import ProtectedContent from "@/shared/components/protected-content";
+import { Button } from "@/shared/components/ui/button";
+import {
+  Tabs,
+  TabsList,
+  TabsPanel,
+  TabsTrigger,
+} from "@/shared/components/ui/tabs";
+import { useAuth } from "@/shared/hooks/use-auth";
+import { BarChart3, MessageCircle, Phone } from "lucide-react";
 
 export default function App() {
-  const [count, setCount] = useState(0);
+  return (
+    <Layout>
+      <ProtectedContent>
+        <Dashboard />
+      </ProtectedContent>
+    </Layout>
+  );
+}
+
+function Dashboard() {
+  const { user, logout } = useAuth();
 
   return (
-    <>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((prev) => prev + 1)} type="button">
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+    <div className="container mx-auto flex flex-col gap-6 px-4 py-8 md:py-12">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-bold text-3xl tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back, {user?.name || "User"}!
+          </p>
+        </div>
+        <Button onClick={logout} variant="destructive">
+          Logout
+        </Button>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+
+      <Tabs defaultValue="analytics">
+        <TabsList>
+          <TabsTrigger value="analytics">
+            <BarChart3 />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="phone-numbers">
+            <Phone />
+            Phone Numbers
+          </TabsTrigger>
+          <TabsTrigger value="feedback">
+            <MessageCircle />
+            Feedback
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsPanel value="analytics">
+          <AnalyticsDashboard />
+        </TabsPanel>
+        <TabsPanel value="phone-numbers">
+          <PhoneNumbersManagement />
+        </TabsPanel>
+        <TabsPanel value="feedback">
+          <FeedbackDashboard />
+        </TabsPanel>
+      </Tabs>
+    </div>
   );
 }
