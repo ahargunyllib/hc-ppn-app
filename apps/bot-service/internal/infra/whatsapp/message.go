@@ -31,12 +31,18 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 	}
 
 	text := msg.Message.GetConversation()
+	quotedMsg := ""
+	if text == "" {
+		text = msg.Message.GetExtendedTextMessage().GetText()
+		quotedMsg = msg.Message.GetExtendedTextMessage().GetContextInfo().GetQuotedMessage().GetConversation()
+	}
 	phoneNumber := msg.Info.Sender.User
 
 	log.Debug(log.CustomLogInfo{
-		"from": phoneNumber,
-		"text": text,
-		"meta": meta,
+		"from":      phoneNumber,
+		"text":      text,
+		"meta":      meta,
+		"quotedMsg": quotedMsg,
 	}, "[WhatsAppBot] Received WhatsApp message")
 
 	if strings.Contains(strings.ToLower(text), "sayang") {
