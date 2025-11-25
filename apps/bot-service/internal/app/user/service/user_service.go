@@ -55,9 +55,7 @@ func (s *UserService) GetByID(ctx context.Context, param *dto.GetUserByIDParam) 
 
 	user, err := s.userRepo.FindByID(ctx, id)
 	if err != nil {
-		return nil, errx.ErrUserNotFound.WithDetails(map[string]any{
-			"id": param.ID,
-		}).WithLocation("UserService.GetByID").WithError(err)
+		return nil, err
 	}
 
 	userRes := dto.ToUserResponse(user)
@@ -123,9 +121,7 @@ func (s *UserService) Update(ctx context.Context, param *dto.UpdateUserParam, re
 
 	user, err := s.userRepo.FindByID(ctx, id)
 	if err != nil {
-		return errx.ErrUserNotFound.WithDetails(map[string]any{
-			"id": param.ID,
-		}).WithLocation("UserService.Update").WithError(err)
+		return err
 	}
 
 	if req.PhoneNumber != nil {
