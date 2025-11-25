@@ -40,6 +40,10 @@ func (r *RequestError) WithError(err error) *RequestError {
 	return r
 }
 
+func (r *RequestError) Unwrap() error {
+	return r.Err
+}
+
 var (
 	ErrInternalServer = NewError(
 		http.StatusInternalServerError,
