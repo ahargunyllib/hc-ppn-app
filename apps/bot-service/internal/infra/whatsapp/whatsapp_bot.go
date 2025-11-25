@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/infra/env"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/genai"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
@@ -15,9 +16,11 @@ import (
 )
 
 type WhatsAppBot struct {
+	ctx       context.Context
 	client    *whatsmeow.Client
 	dbLog     waLog.Logger
 	clientLog waLog.Logger
+	genaiSvc  genai.CustomGenAIInterface
 }
 
 func NewWhatsAppBot(ctx context.Context) (*WhatsAppBot, error) {
@@ -38,9 +41,11 @@ func NewWhatsAppBot(ctx context.Context) (*WhatsAppBot, error) {
 	client := whatsmeow.NewClient(deviceStore, clientLog)
 
 	bot := &WhatsAppBot{
+		ctx:       ctx,
 		client:    client,
 		dbLog:     dbLog,
 		clientLog: clientLog,
+		genaiSvc:  genai.GenAI,
 	}
 
 	return bot, nil
@@ -85,7 +90,7 @@ func (s *WhatsAppBot) Stop() {
 func (s *WhatsAppBot) eventHandler(evt any) {
 	switch v := evt.(type) {
 	case *events.Message:
-		s.handleMessage(v)
+		go s.handleMessage(v)
 	case *events.Connected:
 		s.clientLog.Infof("WhatsApp bot connected successfully")
 	case *events.Disconnected:

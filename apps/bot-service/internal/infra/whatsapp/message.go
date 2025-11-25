@@ -1,7 +1,7 @@
 package whatsapp
 
 import (
-	"context"
+	"strings"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/log"
 	"go.mau.fi/whatsmeow/proto/waE2E"
@@ -39,16 +39,19 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		"meta": meta,
 	}, "[WhatsAppBot] Received WhatsApp message")
 
-	if text != "" {
-		if text == "ping" {
-			s.sendReply(msg, "pong")
-			s.sendMessage(msg.Info.Chat, "test")
+	if strings.Contains(strings.ToLower(text), "sayang") {
+		res, err := s.genaiSvc.Chat(s.ctx, []string{text})
+		if err != nil {
+			s.sendReply(msg, "Sorry, I couldn't process your message right now.")
+			return
 		}
+
+		s.sendReply(msg, res)
 	}
 }
 
 func (s *WhatsAppBot) sendReply(msg *events.Message, text string) {
-	_, err := s.client.SendMessage(context.Background(), msg.Info.Chat, &waE2E.Message{
+	_, err := s.client.SendMessage(s.ctx, msg.Info.Chat, &waE2E.Message{
 		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text: proto.String(text),
 			ContextInfo: &waE2E.ContextInfo{
@@ -66,7 +69,7 @@ func (s *WhatsAppBot) sendReply(msg *events.Message, text string) {
 }
 
 func (s *WhatsAppBot) sendMessage(to types.JID, text string) {
-	_, err := s.client.SendMessage(context.Background(), to, &waE2E.Message{
+	_, err := s.client.SendMessage(s.ctx, to, &waE2E.Message{
 		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text: proto.String(text),
 		},
