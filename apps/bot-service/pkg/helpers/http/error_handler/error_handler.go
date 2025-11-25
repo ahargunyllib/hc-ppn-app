@@ -14,9 +14,11 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 	var valErr validator.ValidationErrors
 	if errors.As(err, &valErr) {
 		return response.SendResponse(c, fiber.StatusUnprocessableEntity, map[string]any{
-			"message":    "Validation error",
-			"error":      valErr,
-			"error_code": "VALIDATION_ERROR",
+			"error":      fiber.Map{
+				"message":    "Validation error",
+				"error_code": "VALIDATION_ERROR",
+				"details":    valErr,
+			},
 		})
 	}
 
@@ -29,7 +31,9 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 			"error":      reqErr.Err,
 		}, "[ErrorHandler] Request error")
 
-		return response.SendResponse(c, reqErr.StatusCode, reqErr)
+		return response.SendResponse(c, reqErr.StatusCode, fiber.Map{
+			"error": reqErr,
+		})
 	}
 
 	var fiberErr *fiber.Error
