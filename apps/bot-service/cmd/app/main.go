@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/infra/database"
@@ -14,6 +15,11 @@ import (
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	var wg sync.WaitGroup
+
 	server := server.NewHTTPServer()
 	psqlDB := database.NewPgsqlConn()
 	defer psqlDB.Close()
@@ -22,14 +28,22 @@ func main() {
 	server.MountRoutes(psqlDB)
 
 	if env.AppEnv.BotEnabled {
-		go startWhatsAppBot()
+		wg.Add(1)
+		go startWhatsAppBot(ctx, &wg)
 	}
 
-	server.Start(env.AppEnv.AppPort)
+	go server.Start(env.AppEnv.AppPort)
+
+	<-ctx.Done()
+	log.Info(log.CustomLogInfo{}, "Shutting down gracefully...")
+
+	// Wait for all goroutines to finish cleanup
+	wg.Wait()
+	log.Info(log.CustomLogInfo{}, "Shutdown complete")
 }
 
-func startWhatsAppBot() {
-	ctx := context.Background()
+func startWhatsAppBot(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 
 	botService, err := whatsapp.NewWhatsAppBot(ctx)
 	if err != nil {
@@ -46,9 +60,7 @@ func startWhatsAppBot() {
 		return
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	<-c
-
+	<-ctx.Done()
 	botService.Stop()
+	log.Info(log.CustomLogInfo{}, "WhatsApp service stopped")
 }
