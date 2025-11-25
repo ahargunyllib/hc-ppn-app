@@ -83,6 +83,6 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	// middleware := middlewares.NewMiddleware()
 
 	s.app.Use(func(c *fiber.Ctx) error {
-		return c.SendFile("./web/not-found.html")
+		return response.SendResponse(c, fiber.StatusNotFound, "Route not found")
 	})
 }
