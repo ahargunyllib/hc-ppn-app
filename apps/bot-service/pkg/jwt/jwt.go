@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/infra/env"
@@ -53,7 +54,11 @@ func (j *CustomJwtStruct) Create() (string, error) {
 }
 
 func (j *CustomJwtStruct) Decode(tokenString string, claims *Claims) error {
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(_ *jwt.Token) (any, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
 		return []byte(j.SecretKey), nil
 	})
 
