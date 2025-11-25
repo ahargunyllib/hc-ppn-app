@@ -8,12 +8,16 @@ type PgError struct {
 	Err            error
 }
 
-func HandlePgError(pgConnErr pgconn.PgError, pgErrors []PgError) error {
+func HandlePgError(pgConnErr *pgconn.PgError, pgErrors []PgError) error {
+	if pgConnErr == nil {
+		return nil
+	}
+
 	for _, pgError := range pgErrors {
 		if pgConnErr.Code == pgError.Code.String() && pgConnErr.ConstraintName == pgError.ConstraintName {
 			return pgError.Err
 		}
 	}
 
-	return nil
+	return pgConnErr
 }
