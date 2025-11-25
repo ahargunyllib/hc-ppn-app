@@ -26,18 +26,21 @@ func NewError(statusCode int, errorCode string, message string) *RequestError {
 }
 
 func (r *RequestError) WithLocation(location string) *RequestError {
-	r.Location = location
-	return r
+	clone := *r
+	clone.Location = location
+	return &clone
 }
 
 func (r *RequestError) WithDetails(details map[string]any) *RequestError {
-	r.Details = details
-	return r
+	clone := *r
+	clone.Details = details
+	return &clone
 }
 
 func (r *RequestError) WithError(err error) *RequestError {
-	r.Err = err
-	return r
+	clone := *r
+	clone.Err = err
+	return &clone
 }
 
 func (r *RequestError) Unwrap() error {
