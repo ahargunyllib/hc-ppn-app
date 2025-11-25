@@ -29,10 +29,10 @@ migrate-create:
 	docker run -i -v ./database/migrations:/database/migrations --network host migrate/migrate create -ext sql -dir /database/migrations $(name)
 
 migrate-up:
-	docker run -i -v ./database/migration:/database/migration --network host migrate/migrate -path /database/migration -database $(db_url) -verbose up $(steps)
+	docker run -i -v ./database/migrations:/database/migrations --network host migrate/migrate -path /database/migrations -database $(db_url) -verbose up $(steps)
 
 migrate-down:
-	docker run -i -v ./database/migration:/database/migration --network host migrate/migrate -path /database/migration -database $(db_url) -verbose down $(steps)
+	docker run -i -v ./database/migrations:/database/migrations --network host migrate/migrate -path /database/migrations -database $(db_url) -verbose down $(steps)
 
 migrate-force:
-	docker run -i -v ./database/migration:/database/migration --network host migrate/migrate -path /database/migration -database $(db_url) -verbose force $(version)
+	docker run -i -v ./database/migrations:/database/migrations --network host migrate/migrate -path /database/migrations -database $(db_url) -verbose force $(version)
