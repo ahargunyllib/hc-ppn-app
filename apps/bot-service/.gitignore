@@ -18,5 +18,9 @@ coverage.*
 # seeders
 data/seeders/prod
 
+# WhatsApp session data
+data/whatsapp.db
+data/whatsapp.db-*
+
 # log
 *.log
