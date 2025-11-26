@@ -30,13 +30,18 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		meta["view_once"] = true
 	}
 
+	phoneNumber := msg.Info.Sender.User
+
 	text := msg.Message.GetConversation()
 	quotedMsg := ""
 	if text == "" {
 		text = msg.Message.GetExtendedTextMessage().GetText()
 		quotedMsg = msg.Message.GetExtendedTextMessage().GetContextInfo().GetQuotedMessage().GetConversation()
 	}
-	phoneNumber := msg.Info.Sender.User
+
+	if text == "" {
+		return
+	}
 
 	log.Debug(log.CustomLogInfo{
 		"from":      phoneNumber,
@@ -63,9 +68,7 @@ func (s *WhatsAppBot) sendReply(msg *events.Message, text string) {
 			ContextInfo: &waE2E.ContextInfo{
 				StanzaID:    proto.String(msg.Info.ID),
 				Participant: proto.String(msg.Info.Sender.String()),
-				QuotedMessage: &waE2E.Message{
-					Conversation: proto.String(msg.Message.GetConversation()),
-				},
+				QuotedMessage: msg.Message,
 			},
 		},
 	})
