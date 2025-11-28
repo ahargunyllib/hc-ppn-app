@@ -7,7 +7,7 @@ echo "🔍 Checking environment files..."
 # check if .env file exists in apps/dashboard
 if [ ! -f ./apps/dashboard/.env ]; then
   echo "⚠️  .env file not found in apps/dashboard. Creating default .env file"
-  echo "VITE_API_BASE_URL=https://hc-ppn-chatbot.cloud/api" > ./apps/dashboard/.env
+  echo "VITE_API_BASE_URL=https://hc-ppn-chatbot.cloud/bot-service" > ./apps/dashboard/.env
   echo "✅ .env file created"
 else
   echo "✅ .env file exists"
