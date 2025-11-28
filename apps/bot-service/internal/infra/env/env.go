@@ -20,7 +20,6 @@ type Env struct {
 	JwtExpTime         time.Duration `mapstructure:"JWT_EXP_TIME"`
 	GoogleAPIKey       string        `mapstructure:"GOOGLE_API_KEY"`
 	BotEnabled         bool          `mapstructure:"BOT_ENABLED"`
-	BotDBPath          string        `mapstructure:"BOT_DB_PATH"`
 }
 
 var AppEnv = getEnv()
