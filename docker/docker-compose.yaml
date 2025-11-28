@@ -9,7 +9,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - traefik
+      - hc-ppn-network
     depends_on:
       - dashboard
       - bot-service
@@ -30,7 +30,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - traefik
+      - hc-ppn-network
   dashboard:
     build:
       context: ..
@@ -42,7 +42,7 @@ services:
       bot-service:
         condition: service_healthy
     networks:
-      - traefik
+      - hc-ppn-network
   bot-service:
     build:
       context: ../apps/bot-service
@@ -56,13 +56,13 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - traefik
+      - hc-ppn-network
     depends_on:
       db:
         condition: service_healthy
 
 networks:
-  traefik:
+  hc-ppn-network:
     driver: bridge
 
 volumes:
