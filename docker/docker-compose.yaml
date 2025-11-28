@@ -34,7 +34,7 @@ services:
       dockerfile: apps/dashboard/Dockerfile
     container_name: hc-ppn-dashboard
     environment:
-      - API_BASE_URL=https://hc-ppn-chatbot.cloud/api
+      - VITE_API_BASE_URL=https://hc-ppn-chatbot.cloud/api
     networks:
       - hc-ppn-network
   bot-service:
