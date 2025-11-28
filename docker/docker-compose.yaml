@@ -10,9 +10,6 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - hc-ppn-network
-    depends_on:
-      - dashboard
-      - bot-service
   db:
     image: postgres:16.1-alpine
     container_name: hc-ppn-postgres
@@ -38,9 +35,6 @@ services:
     container_name: hc-ppn-dashboard
     environment:
       - API_BASE_URL=https://hc-ppn-chatbot.cloud/api
-    depends_on:
-      bot-service:
-        condition: service_healthy
     networks:
       - hc-ppn-network
   bot-service:

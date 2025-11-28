@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"os/signal"
 	"sync"
@@ -29,7 +30,7 @@ func main() {
 
 	if env.AppEnv.BotEnabled {
 		wg.Add(1)
-		go startWhatsAppBot(ctx, &wg)
+		go startWhatsAppBot(ctx, psqlDB.DB, &wg)
 	}
 
 	go server.Start(env.AppEnv.AppPort)
@@ -42,10 +43,10 @@ func main() {
 	log.Info(log.CustomLogInfo{}, "Shutdown complete")
 }
 
-func startWhatsAppBot(ctx context.Context, wg *sync.WaitGroup) {
+func startWhatsAppBot(ctx context.Context, db *sql.DB, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	botService, err := whatsapp.NewWhatsAppBot(ctx)
+	botService, err := whatsapp.NewWhatsAppBot(ctx, db)
 	if err != nil {
 		log.Error(log.CustomLogInfo{
 			"error": err.Error(),
