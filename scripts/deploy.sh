@@ -10,6 +10,8 @@ if [ ! -f ./apps/dashboard/.env ]; then
   echo "VITE_API_BASE_URL=https://hc-ppn-chatbot.cloud/api" > ./apps/dashboard/.env
   echo "✅ .env file created"
 else
+  echo "✅ .env file exists"
+fi
 
 # check if .env file exists in apps/bot-service/config
 if [ ! -f ./apps/bot-service/config/.env ]; then
