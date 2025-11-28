@@ -33,8 +33,6 @@ services:
       context: ..
       dockerfile: apps/dashboard/Dockerfile
     container_name: hc-ppn-dashboard
-    environment:
-      - VITE_API_BASE_URL=https://hc-ppn-chatbot.cloud/api
     networks:
       - hc-ppn-network
   bot-service:

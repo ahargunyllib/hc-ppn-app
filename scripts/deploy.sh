@@ -4,6 +4,13 @@ set -e
 
 echo "🔍 Checking environment files..."
 
+# check if .env file exists in apps/dashboard
+if [ ! -f ./apps/dashboard/.env ]; then
+  echo "⚠️  .env file not found in apps/dashboard. Creating default .env file"
+  echo "VITE_API_BASE_URL=https://hc-ppn-chatbot.cloud/api" > ./apps/dashboard/.env
+  echo "✅ .env file created"
+else
+
 # check if .env file exists in apps/bot-service/config
 if [ ! -f ./apps/bot-service/config/.env ]; then
   echo "⚠️  .env file not found in apps/bot-service/config. Copying from .env.example"
