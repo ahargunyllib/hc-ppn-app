@@ -29,7 +29,7 @@ function Dashboard() {
 
   const { data } = useQuery({
     queryFn: async () => {
-      await fetch(import.meta.env.VITE_API_BASE_URL);
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/health`);
     },
     queryKey: [],
   });
