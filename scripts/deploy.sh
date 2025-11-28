@@ -24,7 +24,7 @@ fi
 
 echo ""
 echo "🐳 Building and starting Docker containers..."
-docker compose -f ./docker/docker-compose.yaml up -d --build
+docker compose -p apps -f ./docker/docker-compose.yaml up -d --build
 
 echo ""
 echo "⏳ Waiting for database to be ready..."
