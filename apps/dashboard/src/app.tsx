@@ -11,7 +11,6 @@ import {
   TabsTrigger,
 } from "@/shared/components/ui/tabs";
 import { useAuth } from "@/shared/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
 import { BarChart3, MessageCircle, Phone } from "lucide-react";
 
 export default function App() {
@@ -27,13 +26,6 @@ export default function App() {
 function Dashboard() {
   const { user, logout } = useAuth();
 
-  const { data } = useQuery({
-    queryFn: async () => {
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/health`);
-    },
-    queryKey: [],
-  });
-
   return (
     <div className="container mx-auto flex flex-col gap-6 px-4 py-8 md:py-12">
       <div className="flex items-center justify-between">
@@ -41,7 +33,6 @@ function Dashboard() {
           <h1 className="font-bold text-3xl tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
             Welcome back, {user?.name || "User"}! (
-            {data ? "API Connected" : "API Disconnected"})
           </p>
         </div>
         <Button onClick={logout} variant="destructive">
