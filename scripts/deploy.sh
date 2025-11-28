@@ -41,7 +41,7 @@ DB_URL="postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmod
 # Run migrations using docker with traefik network
 docker run --rm \
   -v ./apps/bot-service/database/migrations:/database/migrations \
-  --network hc-ppn-network \
+  --network docker_hc-ppn-network \
   migrate/migrate \
   -path /database/migrations \
   -database "$DB_URL" \
@@ -51,4 +51,4 @@ echo ""
 echo "✅ Deployment completed successfully!"
 echo ""
 echo "📊 Services status:"
-docker compose -f ./docker/docker-compose.yaml ps
+docker ps
