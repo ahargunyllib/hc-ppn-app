@@ -33,7 +33,7 @@ echo ""
 echo "🔄 Running database migrations..."
 
 # Load .env file to get database credentials
-export $(cat ./apps/bot-service/config/.env | grep -v '^#' | xargs)
+export $(cat ./apps/bot-service/config/.env | grep -v '^#' | sed 's/#.*$//' | grep -v '^[[:space:]]*$' | xargs)
 
 # Construct database URL
 DB_URL="postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
@@ -41,7 +41,7 @@ DB_URL="postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmod
 # Run migrations using docker with traefik network
 docker run --rm \
   -v ./apps/bot-service/database/migrations:/database/migrations \
-  --network docker_traefik \
+  --network hc-ppn-network \
   migrate/migrate \
   -path /database/migrations \
   -database "$DB_URL" \
