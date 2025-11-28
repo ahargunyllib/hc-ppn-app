@@ -50,11 +50,6 @@ services:
     container_name: hc-ppn-bot-service
     env_file:
       - ../apps/bot-service/config/.env
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080 || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
     networks:
       - hc-ppn-network
     depends_on:
