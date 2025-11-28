@@ -25,11 +25,6 @@ tmp/
 *.swo
 *~
 
-# Environment files
-config/.env
-config/.env.local
-config/.env.*.local
-
 # Git
 .git/
 .gitignore
