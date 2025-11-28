@@ -50,6 +50,9 @@ services:
     container_name: hc-ppn-bot-service
     env_file:
       - ../apps/bot-service/config/.env
+    volumes:
+      - ../apps/bot-service/data:/app/data
+      - ../apps/bot-service/config:/app/config
     networks:
       - hc-ppn-network
     depends_on:
