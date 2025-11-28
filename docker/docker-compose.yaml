@@ -10,7 +10,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - hc-ppn-network
-  db:
+  postgres:
     image: postgres:16.1-alpine
     container_name: hc-ppn-postgres
     environment:
