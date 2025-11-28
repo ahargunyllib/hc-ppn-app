@@ -48,7 +48,7 @@ services:
     networks:
       - hc-ppn-network
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
 
 networks:
