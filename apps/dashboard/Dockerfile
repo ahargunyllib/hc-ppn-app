@@ -22,13 +22,14 @@ COPY apps/dashboard/ apps/dashboard/
 RUN pnpm --filter dashboard build
 
 # Production stage
-FROM oven/bun:1.3-alpine
+FROM nginx:alpine
 
-WORKDIR /app
+# Copy built files to nginx html directory
+COPY --from=builder /app/apps/dashboard/dist /usr/share/nginx/html
 
-# Copy built files from builder
-COPY --from=builder /app/apps/dashboard/dist .
+# Copy nginx configuration
+COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 3001
+EXPOSE 80
 
-CMD ["bun", "serve", "-p", "3001", "."]
+CMD ["nginx", "-g", "daemon off;"]
