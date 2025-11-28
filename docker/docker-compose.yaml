@@ -33,8 +33,8 @@ services:
       - traefik
   dashboard:
     build:
-      context: ../apps/dashboard
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: apps/dashboard/Dockerfile
     container_name: hc-ppn-dashboard
     environment:
       - API_BASE_URL=https://hc-ppn-chatbot.cloud/api
