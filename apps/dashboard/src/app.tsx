@@ -32,7 +32,7 @@ function Dashboard() {
         <div>
           <h1 className="font-bold text-3xl tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {user?.name || "User"}! (
+            Welcome back, {user?.name || "User"}!
           </p>
         </div>
         <Button onClick={logout} variant="destructive">
