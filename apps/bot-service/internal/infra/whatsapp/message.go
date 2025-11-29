@@ -56,7 +56,11 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		"quotedMsg": quotedMsg,
 	}, "[WhatsAppBot] Received WhatsApp message")
 
-	session := s.getOrCreateSession(phoneNumber, &chatJID)
+	session := s.getSession(phoneNumber)
+	if session == nil {
+		session = s.createSession(phoneNumber, &chatJID)
+		s.sendMessage(chatJID, "Halo! Selamat datang di layanan WhatsApp kami. Jika anda sudah selesai, silakan ketik /selesai untuk memberikan feedback.")
+	}
 
 	if session.WaitingForRating {
 		s.handleRatingInput(msg, text, session)

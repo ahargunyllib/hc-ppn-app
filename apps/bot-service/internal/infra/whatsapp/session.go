@@ -48,21 +48,23 @@ func (s *WhatsAppBot) processExpiredSessions() {
 	}
 }
 
-func (s *WhatsAppBot) getOrCreateSession(phoneNumber string, chatJID *types.JID) *Session {
+func (s *WhatsAppBot) getSession(phoneNumber string) *Session {
 	s.sessionsMux.Lock()
 	defer s.sessionsMux.Unlock()
 
-	session, exists := s.sessions[phoneNumber]
-	if !exists {
-		session = &Session{
-			PhoneNumber:   phoneNumber,
-			LastMessageAt: time.Now(),
-			ChatJID:           chatJID,
-		}
-		s.sessions[phoneNumber] = session
+	return s.sessions[phoneNumber]
+}
 
-		s.sendMessage(*chatJID, "Halo! Selamat datang di layanan WhatsApp kami. Jika anda sudah selesai, silakan ketik /selesai untuk memberikan feedback.")
+func (s *WhatsAppBot) createSession(phoneNumber string, chatJID *types.JID) *Session {
+	s.sessionsMux.Lock()
+	defer s.sessionsMux.Unlock()
+
+	session := &Session{
+		PhoneNumber:   phoneNumber,
+		LastMessageAt: time.Now(),
+		ChatJID:       chatJID,
 	}
+	s.sessions[phoneNumber] = session
 
 	return session
 }
