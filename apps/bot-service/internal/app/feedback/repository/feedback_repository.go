@@ -53,7 +53,12 @@ func (r *feedbackRepository) Create(ctx context.Context, feedback *entity.Feedba
 func (r *feedbackRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Feedback, error) {
 	query := `
 		SELECT
-			id, user_id, rating, comment, created_at,
+			feedbacks.id,
+			feedbacks.user_id,
+			feedbacks.rating,
+			feedbacks.comment,
+			feedbacks.created_at,
+
 			users.id AS "user.id",
 			users.phone_number AS "user.phone_number",
 			users.label AS "user.label",
@@ -92,7 +97,12 @@ func (r *feedbackRepository) List(ctx context.Context, filter *entity.GetFeedbac
 
 	qb.WriteString(`
 		SELECT
-			id, user_id, rating, comment, created_at,
+			feedbacks.id,
+			feedbacks.user_id,
+			feedbacks.rating,
+			feedbacks.comment,
+			feedbacks.created_at,
+
 			users.id AS "user.id",
 			users.phone_number AS "user.phone_number",
 			users.label AS "user.label",
