@@ -31,7 +31,7 @@ func (r *feedbackRepository) Create(ctx context.Context, feedback *entity.Feedba
 		if errors.As(err, &pgErr) {
 			pgErrors := []pg.PgError{
 				{
-					Code:           pg.ForeignKeyViolation,
+					Code:           pg.ForeignKey,
 					ConstraintName: "fk_feedback_user",
 					Err: errx.ErrUserNotFound.WithDetails(map[string]any{
 						"user_id": feedback.UserID,
@@ -52,8 +52,17 @@ func (r *feedbackRepository) Create(ctx context.Context, feedback *entity.Feedba
 
 func (r *feedbackRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Feedback, error) {
 	query := `
-		SELECT id, user_id, rating, comment, created_at
+		SELECT
+			id, user_id, rating, comment, created_at,
+			users.id AS "user.id",
+			users.phone_number AS "user.phone_number",
+			users.label AS "user.label",
+			users.assigned_to AS "user.assigned_to",
+			users.notes AS "user.notes",
+			users.created_at AS "user.created_at",
+			users.updated_at AS "user.updated_at"
 		FROM feedbacks
+		LEFT JOIN users ON feedbacks.user_id = users.id
 		WHERE id = $1
 	`
 
@@ -82,8 +91,17 @@ func (r *feedbackRepository) List(ctx context.Context, filter *entity.GetFeedbac
 	var args []any
 
 	qb.WriteString(`
-		SELECT id, user_id, rating, comment, created_at
+		SELECT
+			id, user_id, rating, comment, created_at,
+			users.id AS "user.id",
+			users.phone_number AS "user.phone_number",
+			users.label AS "user.label",
+			users.assigned_to AS "user.assigned_to",
+			users.notes AS "user.notes",
+			users.created_at AS "user.created_at",
+			users.updated_at AS "user.updated_at"
 		FROM feedbacks
+		LEFT JOIN users ON feedbacks.user_id = users.id
 	`)
 
 	if filter.UserID != nil {

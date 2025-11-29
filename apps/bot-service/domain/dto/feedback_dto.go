@@ -7,17 +7,17 @@ import (
 )
 
 type FeedbackResponse struct {
-	ID        string  `json:"id"`
-	UserID    string  `json:"userId"`
-	Rating    int     `json:"rating"`
-	Comment   *string `json:"comment,omitempty"`
-	CreatedAt string  `json:"createdAt"`
+	ID        string       `json:"id"`
+	User      UserResponse `json:"user"`
+	Rating    int          `json:"rating"`
+	Comment   *string      `json:"comment,omitempty"`
+	CreatedAt string       `json:"createdAt"`
 }
 
 func ToFeedbackResponse(feedback *entity.Feedback) FeedbackResponse {
 	return FeedbackResponse{
 		ID:        feedback.ID.String(),
-		UserID:    feedback.UserID.String(),
+		User:      ToUserResponse(&feedback.User),
 		Rating:    feedback.Rating,
 		Comment:   feedback.Comment,
 		CreatedAt: feedback.CreatedAt.Format(time.RFC3339),

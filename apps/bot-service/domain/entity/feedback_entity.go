@@ -12,6 +12,8 @@ type Feedback struct {
 	Rating    int       `db:"rating"`
 	Comment   *string   `db:"comment"`
 	CreatedAt time.Time `db:"created_at"`
+
+	User User `db:"user"`
 }
 
 type GetFeedbacksFilter struct {
