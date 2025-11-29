@@ -75,3 +75,11 @@ type GetUserByIDParam struct {
 type GetUserByIDResponse struct {
 	User UserResponse `json:"user"`
 }
+
+type GetUserByPhoneNumberParam struct {
+	PhoneNumber string `param:"phoneNumber" validate:"required,min=10,max=20"`
+}
+
+type GetUserByPhoneNumberResponse struct {
+	User UserResponse `json:"user"`
+}
