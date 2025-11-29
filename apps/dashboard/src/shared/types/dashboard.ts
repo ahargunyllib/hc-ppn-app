@@ -21,21 +21,3 @@ export type AnalyticsDashboard = {
   topTopics: TopicData[];
   satisfactionTrend: SatisfactionTrendData[];
 };
-
-export type PhoneNumber = {
-  id: string;
-  phoneNumber: string;
-  label: string;
-  assignedTo?: string;
-  notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type Feedback = {
-  id: string;
-  userId: string;
-  rating: number; // 1-5
-  comment?: string;
-  createdAt: string;
-};
