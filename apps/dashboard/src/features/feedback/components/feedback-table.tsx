@@ -1,3 +1,9 @@
+import { Button } from "@/shared/components/ui/button";
+import {
+  PreviewCard,
+  PreviewCardPopup,
+  PreviewCardTrigger,
+} from "@/shared/components/ui/preview-card";
 import {
   Table,
   TableBody,
@@ -22,10 +28,38 @@ type FeedbackTableProps = {
 export function FeedbackTable({ data }: FeedbackTableProps) {
   const columns: ColumnDef<Feedback>[] = [
     {
-      accessorKey: "userId",
-      header: "User ID",
+      header: "User",
       cell: ({ row }) => (
-        <span className="font-mono text-xs">{row.original.userId}</span>
+        <PreviewCard>
+          <PreviewCardTrigger render={<Button size="xs" variant="ghost" />}>
+            {row.original.user.phoneNumber}
+          </PreviewCardTrigger>
+          <PreviewCardPopup align="start">
+            <div className="flex w-full flex-col gap-2">
+              <h4 className="font-medium">Phone Number Details</h4>
+              <div className="flex w-full flex-1 flex-col gap-1 rounded-sm border bg-muted p-2 text-muted-foreground text-sm">
+                <p>
+                  <strong>Label:</strong> {row.original.user.label}
+                </p>
+                <p>
+                  <strong>Assigned To:</strong>{" "}
+                  {row.original.user.assignedTo ?? "-"}
+                </p>
+                <p>
+                  <strong>Created At:</strong>{" "}
+                  {new Date(row.original.user.createdAt).toLocaleDateString(
+                    "en-US",
+                    {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    }
+                  )}
+                </p>
+              </div>
+            </div>
+          </PreviewCardPopup>
+        </PreviewCard>
       ),
     },
     {
@@ -55,11 +89,6 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
           month: "short",
           day: "numeric",
         }),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: () => null,
     },
   ];
 
