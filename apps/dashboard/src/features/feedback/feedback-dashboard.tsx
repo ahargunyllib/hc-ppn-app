@@ -1,3 +1,4 @@
+import DataPagination from "@/shared/components/data-pagination";
 import {
   Alert,
   AlertDescription,
@@ -11,17 +12,24 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { useGetFeedbacks } from "@/shared/repositories/feedback/query";
+import { useState } from "react";
 import { FeedbackTable } from "./components/feedback-table";
-import { useFeedback } from "./hooks/use-feedback";
 
 export function FeedbackDashboard() {
-  const {
-    data: feedbacks,
-    isLoading: isFeedbacksLoading,
-    error: feedbacksError,
-  } = useFeedback();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  if (isFeedbacksLoading) {
+  const {
+    data,
+    isLoading,
+    error,
+    // fetchNextPage,
+    // hasNextPage,
+    // isFetchingNextPage,
+  } = useGetFeedbacks({ page, limit });
+
+  if (isLoading) {
     return (
       <Card>
         <CardHeader>
@@ -29,19 +37,21 @@ export function FeedbackDashboard() {
           <Skeleton className="h-4 w-3/4 rounded-md" />
         </CardHeader>
         <CardContent>
-          <FeedbackTable data={feedbacks || []} />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-12 w-full rounded-md" />
+            <Skeleton className="h-12 w-full rounded-md" />
+            <Skeleton className="h-12 w-full rounded-md" />
+          </div>
         </CardContent>
       </Card>
     );
   }
 
-  if (feedbacksError) {
+  if (error) {
     return (
       <Alert variant="error">
         <AlertTitle>Error loading feedback</AlertTitle>
-        <AlertDescription>
-          {feedbacksError.message || "Unknown error"}
-        </AlertDescription>
+        <AlertDescription>{error.message || "Unknown error"}</AlertDescription>
       </Alert>
     );
   }
@@ -54,8 +64,18 @@ export function FeedbackDashboard() {
           Overview of user feedback and satisfaction metrics.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <FeedbackTable data={feedbacks || []} />
+      <CardContent className="flex flex-col gap-4">
+        <FeedbackTable
+          data={data?.pages.flatMap((p) => p.payload.feedbacks) || []}
+        />
+        <DataPagination
+          currentLimit={limit}
+          currentPage={page}
+          setLimit={setLimit}
+          setPage={setPage}
+          totalData={data?.pages[0].payload.meta.pagination.total_data || 0}
+          totalPage={data?.pages[0].payload.meta.pagination.total_page || 1}
+        />
       </CardContent>
     </Card>
   );

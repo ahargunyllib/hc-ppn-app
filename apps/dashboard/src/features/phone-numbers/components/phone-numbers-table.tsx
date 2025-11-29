@@ -6,20 +6,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
-import type { PhoneNumber } from "@/shared/types/dashboard";
+import type { User } from "@/shared/types/user";
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
+import DeletePhoneNumberDialog from "./delete-phone-number-dialog";
 
 type PhoneNumbersTableProps = {
-  data: PhoneNumber[];
+  data: User[];
 };
 
 export function PhoneNumbersTable({ data }: PhoneNumbersTableProps) {
-  const columns: ColumnDef<PhoneNumber>[] = [
+  const columns: ColumnDef<User>[] = [
     {
       accessorKey: "phoneNumber",
       header: "Phone Number",
@@ -31,6 +32,7 @@ export function PhoneNumbersTable({ data }: PhoneNumbersTableProps) {
     {
       accessorKey: "assignedTo",
       header: "Assigned To",
+      cell: ({ getValue }) => getValue<string>() || "-",
     },
     {
       accessorKey: "createdAt",
@@ -45,7 +47,11 @@ export function PhoneNumbersTable({ data }: PhoneNumbersTableProps) {
     {
       id: "actions",
       header: "Actions",
-      cell: () => null,
+      cell: ({ row }) => (
+        <div className="flex flex-row gap-2">
+          <DeletePhoneNumberDialog user={row.original} />
+        </div>
+      ),
     },
   ];
 

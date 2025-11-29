@@ -8,18 +8,20 @@ import (
 )
 
 type Env struct {
-	AppEnv             string        `mapstructure:"APP_ENV"`
-	AppPort            string        `mapstructure:"APP_PORT"`
-	APIKey             string        `mapstructure:"API_KEY"`
-	DBHost             string        `mapstructure:"DB_HOST"`
-	DBPort             string        `mapstructure:"DB_PORT"`
-	DBUser             string        `mapstructure:"DB_USER"`
-	DBPass             string        `mapstructure:"DB_PASS"`
-	DBName             string        `mapstructure:"DB_NAME"`
-	JwtSecretKey       string        `mapstructure:"JWT_SECRET_KEY"`
-	JwtExpTime         time.Duration `mapstructure:"JWT_EXP_TIME"`
-	GoogleAPIKey       string        `mapstructure:"GOOGLE_API_KEY"`
-	BotEnabled         bool          `mapstructure:"BOT_ENABLED"`
+	AppEnv       string        `mapstructure:"APP_ENV"`
+	AppPort      string        `mapstructure:"APP_PORT"`
+	APIKey       string        `mapstructure:"API_KEY"`
+	DBHost       string        `mapstructure:"DB_HOST"`
+	DBPort       string        `mapstructure:"DB_PORT"`
+	DBUser       string        `mapstructure:"DB_USER"`
+	DBPass       string        `mapstructure:"DB_PASS"`
+	DBName       string        `mapstructure:"DB_NAME"`
+	JwtSecretKey string        `mapstructure:"JWT_SECRET_KEY"`
+	JwtExpTime   time.Duration `mapstructure:"JWT_EXP_TIME"`
+	GoogleAPIKey string        `mapstructure:"GOOGLE_API_KEY"`
+	BotEnabled   bool          `mapstructure:"BOT_ENABLED"`
+	DifyAPIURL   string        `mapstructure:"DIFY_API_URL"`
+	DifyAPIKey   string        `mapstructure:"DIFY_API_KEY"`
 }
 
 var AppEnv = getEnv()

@@ -1,6 +1,7 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastProvider } from "@/shared/components/ui/toast";
 import AuthProvider from "@/shared/hooks/use-auth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 type Props = {
   children: React.ReactNode;
@@ -21,7 +22,10 @@ export default function Layout({ children }: Props) {
     <div className="isolate">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            {children}
+            <ReactQueryDevtools initialIsOpen={false} />
+          </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>
     </div>
