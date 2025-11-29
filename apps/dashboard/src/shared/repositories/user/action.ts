@@ -10,3 +10,7 @@ export const createUser = async (req: CreateUserRequest) => {
   const response = await api.post("/users", req);
   return response.data;
 };
+
+export const deleteUser = async (id: string) => {
+  await api.delete(`/users/${id}`);
+};

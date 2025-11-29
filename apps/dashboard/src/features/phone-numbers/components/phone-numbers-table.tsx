@@ -13,6 +13,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
+import DeletePhoneNumberDialog from "./delete-phone-number-dialog";
 
 type PhoneNumbersTableProps = {
   data: User[];
@@ -46,7 +47,11 @@ export function PhoneNumbersTable({ data }: PhoneNumbersTableProps) {
     {
       id: "actions",
       header: "Actions",
-      cell: () => null,
+      cell: ({ row }) => (
+        <div className="flex flex-row gap-2">
+          <DeletePhoneNumberDialog user={row.original} />
+        </div>
+      ),
     },
   ];
 
