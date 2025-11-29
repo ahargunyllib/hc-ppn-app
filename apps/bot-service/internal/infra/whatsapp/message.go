@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/entity"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/dto"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/log"
-	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/uuid"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -37,6 +35,7 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 	}
 
 	phoneNumber := msg.Info.Sender.User
+	chatJID := msg.Info.Chat
 
 	text := msg.Message.GetConversation()
 	quotedMsg := ""
@@ -56,10 +55,10 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		"quotedMsg": quotedMsg,
 	}, "[WhatsAppBot] Received WhatsApp message")
 
-	session := s.getOrCreateSession(phoneNumber)
+	session := s.getOrCreateSession(phoneNumber, &chatJID)
 
 	if session.WaitingForRating {
-		s.handleRatingInput(msg, phoneNumber, text, session)
+		s.handleRatingInput(msg, text, session)
 		return
 	}
 
@@ -69,7 +68,7 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 	}
 
 	if strings.ToLower(strings.TrimSpace(text)) == "/selesai" {
-		s.handleEndSession(msg, phoneNumber, session)
+		s.handleEndSession(msg, session)
 		return
 	}
 
@@ -86,7 +85,7 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 	}
 }
 
-func (s *WhatsAppBot) handleEndSession(msg *events.Message, phoneNumber string, session *Session) {
+func (s *WhatsAppBot) handleEndSession(msg *events.Message, session *Session) {
 	s.sessionsMux.Lock()
 	session.WaitingForRating = true
 	s.sessionsMux.Unlock()
@@ -94,7 +93,7 @@ func (s *WhatsAppBot) handleEndSession(msg *events.Message, phoneNumber string, 
 	s.sendReply(msg, "Terima kasih telah menggunakan layanan kami! 🙏\n\nSilakan berikan rating Anda (1-5):")
 }
 
-func (s *WhatsAppBot) handleRatingInput(msg *events.Message, phoneNumber string, text string, session *Session) {
+func (s *WhatsAppBot) handleRatingInput(msg *events.Message, text string, session *Session) {
 	rating, err := strconv.Atoi(strings.TrimSpace(text))
 	if err != nil || rating < 1 || rating > 5 {
 		s.sendReply(msg, "Rating tidak valid. Silakan masukkan angka antara 1-5:")
@@ -113,25 +112,14 @@ func (s *WhatsAppBot) handleRatingInput(msg *events.Message, phoneNumber string,
 func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string, text string, session *Session) {
 	ctx := context.Background()
 
-	users, _, err := s.userRepo.List(ctx, &entity.GetUsersFilter{
-		Offset: 0,
-		Limit:  1,
-		Search: phoneNumber,
+	userRes, err := s.userSvc.GetByPhoneNumber(ctx, &dto.GetUserByPhoneNumberParam{
+		PhoneNumber: phoneNumber,
 	})
-
 	if err != nil {
-		s.clientLog.Errorf("Failed to find user: %v", err)
+		s.clientLog.Errorf("Failed to find user by phone number: %v", err)
 		s.sendReply(msg, "Sorry, something went wrong. Please try again later.")
 		return
 	}
-
-	if len(users) == 0 {
-		s.clientLog.Errorf("User not found for phone number: %s", phoneNumber)
-		s.sendReply(msg, "Sorry, user not found. Please contact support.")
-		return
-	}
-
-	user := users[0]
 
 	var comment *string
 	trimmedText := strings.TrimSpace(text)
@@ -139,22 +127,12 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 		comment = &trimmedText
 	}
 
-	feedbackID, err := uuid.UUID.NewV7()
+	feedbackRes, err := s.feedbackSvc.Create(ctx, &dto.CreateFeedbackRequest{
+		UserID:  userRes.User.ID,
+		Rating:  session.Rating,
+		Comment: comment,
+	})
 	if err != nil {
-		s.clientLog.Errorf("Failed to generate feedback ID: %v", err)
-		s.sendReply(msg, "Sorry, something went wrong. Please try again later.")
-		return
-	}
-
-	feedback := &entity.Feedback{
-		ID:        feedbackID,
-		UserID:    user.ID,
-		Rating:    session.Rating,
-		Comment:   comment,
-		CreatedAt: time.Now(),
-	}
-
-	if err := s.feedbackRepo.Create(ctx, feedback); err != nil {
 		s.clientLog.Errorf("Failed to save feedback: %v", err)
 		s.sendReply(msg, "Sorry, something went wrong while saving your feedback.")
 		return
@@ -166,10 +144,10 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 
 	log.Info(log.CustomLogInfo{
 		"phone_number": phoneNumber,
-		"user_id":      user.ID.String(),
+		"user_id":      userRes.User.ID,
 		"rating":       session.Rating,
 		"has_comment":  comment != nil,
-		"feedback_id":  feedback.ID.String(),
+		"feedback_id":  feedbackRes.ID,
 	}, "[WhatsAppBot] Feedback received and saved")
 }
 
