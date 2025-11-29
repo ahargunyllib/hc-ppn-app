@@ -31,6 +31,7 @@ export function PhoneNumbersTable({ data }: PhoneNumbersTableProps) {
     {
       accessorKey: "assignedTo",
       header: "Assigned To",
+      cell: ({ getValue }) => getValue<string>() || "-",
     },
     {
       accessorKey: "createdAt",

@@ -4,7 +4,6 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/shared/components/ui/alert";
-import { Button } from "@/shared/components/ui/button";
 import {
   Card,
   CardAction,
@@ -15,26 +14,16 @@ import {
 } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useGetUsers } from "@/shared/repositories/user/query";
-import { CircleAlertIcon, Plus } from "lucide-react";
+import { CircleAlertIcon } from "lucide-react";
 import { useState } from "react";
+import CreatePhoneNumberDialog from "./components/create-phone-number-dialog";
 import { PhoneNumbersTable } from "./components/phone-numbers-table";
 
 export function PhoneNumbersManagement() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  const {
-    data,
-    isLoading,
-    error,
-    // fetchNextPage,
-    // hasNextPage,
-    // isFetchingNextPage,
-  } = useGetUsers({ page, limit });
-
-  const handleAdd = () => {
-    // TODO
-  };
+  const { data, isLoading, error } = useGetUsers({ page, limit });
 
   if (isLoading) {
     return (
@@ -69,10 +58,7 @@ export function PhoneNumbersManagement() {
         <CardTitle>Phone Number Management</CardTitle>
         <CardDescription>Manage user phone numbers.</CardDescription>
         <CardAction>
-          <Button onClick={handleAdd} size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Phone Number
-          </Button>
+          <CreatePhoneNumberDialog />
         </CardAction>
       </CardHeader>
       <CardContent>

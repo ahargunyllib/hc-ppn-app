@@ -1,6 +1,10 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { getUsers } from "./action";
-import type { GetUsersQuery } from "./dto";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { createUser, getUsers } from "./action";
+import type { CreateUserRequest, GetUsersQuery } from "./dto";
 
 export const useGetUsers = (query?: GetUsersQuery) =>
   useInfiniteQuery({
@@ -14,3 +18,15 @@ export const useGetUsers = (query?: GetUsersQuery) =>
         ? lastPage.payload.meta.pagination.page + 1
         : undefined,
   });
+
+export const useCreateUser = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["createUser"],
+    mutationFn: (req: CreateUserRequest) => createUser(req),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+};
