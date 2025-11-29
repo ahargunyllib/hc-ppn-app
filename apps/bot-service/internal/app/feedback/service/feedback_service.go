@@ -7,6 +7,7 @@ import (
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/dto"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/entity"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/errx"
+	"github.com/google/uuid"
 )
 
 func (s *FeedbackService) Create(ctx context.Context, req *dto.CreateFeedbackRequest) (*dto.CreateFeedbackResponse, error) {
@@ -14,29 +15,11 @@ func (s *FeedbackService) Create(ctx context.Context, req *dto.CreateFeedbackReq
 		return nil, err
 	}
 
-	sessionID, err := s.uuidPkg.Parse(req.SessionID)
+	userID, err := s.uuidPkg.Parse(req.UserID)
 	if err != nil {
-		return nil, errx.ErrSessionNotFound.WithDetails(map[string]any{
-			"session_id": req.SessionID,
+		return nil, errx.ErrUserNotFound.WithDetails(map[string]any{
+			"user_id": req.UserID,
 		}).WithLocation("FeedbackService.Create").WithError(err)
-	}
-
-	session, err := s.sessionRepo.FindByID(ctx, sessionID)
-	if err != nil {
-		return nil, err
-	}
-
-	if session.Status == entity.SessionStatusClosed {
-		return nil, errx.ErrSessionAlreadyClosed.WithLocation("FeedbackService.Create")
-	}
-
-	existingFeedback, err := s.feedbackRepo.FindBySessionID(ctx, sessionID)
-	if err != nil {
-		return nil, err
-	}
-
-	if existingFeedback != nil {
-		return nil, errx.ErrFeedbackAlreadyExists.WithLocation("FeedbackService.Create")
 	}
 
 	id, err := s.uuidPkg.NewV7()
@@ -45,21 +28,14 @@ func (s *FeedbackService) Create(ctx context.Context, req *dto.CreateFeedbackReq
 	}
 
 	feedback := &entity.Feedback{
-		ID:          id,
-		SessionID:   sessionID,
-		PhoneNumber: req.PhoneNumber,
-		Rating:      req.Rating,
-		Comment:     req.Comment,
-		CreatedAt:   time.Now(),
+		ID:        id,
+		UserID:    userID,
+		Rating:    req.Rating,
+		Comment:   req.Comment,
+		CreatedAt: time.Now(),
 	}
 
 	if err := s.feedbackRepo.Create(ctx, feedback); err != nil {
-		return nil, err
-	}
-
-	session.Status = entity.SessionStatusClosed
-	session.UpdatedAt = time.Now()
-	if err := s.sessionRepo.Update(ctx, session); err != nil {
 		return nil, err
 	}
 
@@ -104,12 +80,23 @@ func (s *FeedbackService) List(ctx context.Context, query *dto.GetFeedbacksQuery
 	limit := min(max(query.Limit, 10), 100)
 	page := max(query.Page, 1)
 
+	var userID *uuid.UUID
+	if query.UserID != nil {
+		parsedUserID, err := s.uuidPkg.Parse(*query.UserID)
+		if err != nil {
+			return nil, errx.ErrUserNotFound.WithDetails(map[string]any{
+				"user_id": *query.UserID,
+			}).WithLocation("FeedbackService.List").WithError(err)
+		}
+		userID = &parsedUserID
+	}
+
 	filter := entity.GetFeedbacksFilter{
-		Offset:      (page - 1) * limit,
-		Limit:       limit,
-		PhoneNumber: query.PhoneNumber,
-		MinRating:   query.MinRating,
-		MaxRating:   query.MaxRating,
+		Offset:    (page - 1) * limit,
+		Limit:     limit,
+		UserID:    userID,
+		MinRating: query.MinRating,
+		MaxRating: query.MaxRating,
 	}
 
 	feedbacks, total, err := s.feedbackRepo.List(ctx, &filter)

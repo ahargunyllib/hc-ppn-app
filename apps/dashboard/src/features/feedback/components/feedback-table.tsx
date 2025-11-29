@@ -22,10 +22,10 @@ type FeedbackTableProps = {
 export function FeedbackTable({ data }: FeedbackTableProps) {
   const columns: ColumnDef<Feedback>[] = [
     {
-      accessorKey: "phoneNumber",
-      header: "Phone Number",
+      accessorKey: "userId",
+      header: "User ID",
       cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.original.phoneNumber}</span>
+        <span className="font-mono text-xs">{row.original.userId}</span>
       ),
     },
     {

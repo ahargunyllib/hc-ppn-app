@@ -16,8 +16,8 @@ import (
 
 func (r *feedbackRepository) Create(ctx context.Context, feedback *entity.Feedback) error {
 	query := `
-		INSERT INTO feedbacks (id, session_id, phone_number, rating, comment, created_at)
-		VALUES (:id, :session_id, :phone_number, :rating, :comment, :created_at)
+		INSERT INTO feedbacks (id, user_id, rating, comment, created_at)
+		VALUES (:id, :user_id, :rating, :comment, :created_at)
 	`
 
 	_, err := r.db.NamedExecContext(
@@ -32,9 +32,9 @@ func (r *feedbackRepository) Create(ctx context.Context, feedback *entity.Feedba
 			pgErrors := []pg.PgError{
 				{
 					Code:           pg.ForeignKeyViolation,
-					ConstraintName: "fk_feedback_session",
-					Err: errx.ErrSessionNotFound.WithDetails(map[string]any{
-						"session_id": feedback.SessionID,
+					ConstraintName: "fk_feedback_user",
+					Err: errx.ErrUserNotFound.WithDetails(map[string]any{
+						"user_id": feedback.UserID,
 					}).WithLocation("feedbackRepository.Create"),
 				},
 			}
@@ -52,7 +52,7 @@ func (r *feedbackRepository) Create(ctx context.Context, feedback *entity.Feedba
 
 func (r *feedbackRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Feedback, error) {
 	query := `
-		SELECT id, session_id, phone_number, rating, comment, created_at
+		SELECT id, user_id, rating, comment, created_at
 		FROM feedbacks
 		WHERE id = $1
 	`
@@ -73,27 +73,6 @@ func (r *feedbackRepository) FindByID(ctx context.Context, id uuid.UUID) (*entit
 	return &feedback, nil
 }
 
-func (r *feedbackRepository) FindBySessionID(ctx context.Context, sessionID uuid.UUID) (*entity.Feedback, error) {
-	query := `
-		SELECT id, session_id, phone_number, rating, comment, created_at
-		FROM feedbacks
-		WHERE session_id = $1
-	`
-
-	var feedback entity.Feedback
-	err := r.db.GetContext(ctx, &feedback, query, sessionID)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-
-		return nil, errx.ErrInternalServer.WithLocation("feedbackRepository.FindBySessionID").WithError(err)
-	}
-
-	return &feedback, nil
-}
-
 func (r *feedbackRepository) List(ctx context.Context, filter *entity.GetFeedbacksFilter) ([]entity.Feedback, int64, error) {
 	offset := min(max(filter.Offset, 0), 10000)
 	limit := min(max(filter.Limit, 10), 100)
@@ -103,13 +82,13 @@ func (r *feedbackRepository) List(ctx context.Context, filter *entity.GetFeedbac
 	var args []any
 
 	qb.WriteString(`
-		SELECT id, session_id, phone_number, rating, comment, created_at
+		SELECT id, user_id, rating, comment, created_at
 		FROM feedbacks
 	`)
 
-	if filter.PhoneNumber != nil && *filter.PhoneNumber != "" {
-		whereClauses.WriteString(fmt.Sprintf(" AND phone_number = $%d", len(args)+1))
-		args = append(args, *filter.PhoneNumber)
+	if filter.UserID != nil {
+		whereClauses.WriteString(fmt.Sprintf(" AND user_id = $%d", len(args)+1))
+		args = append(args, *filter.UserID)
 	}
 
 	if filter.MinRating != nil {

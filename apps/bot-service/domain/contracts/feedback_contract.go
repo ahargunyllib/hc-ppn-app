@@ -14,7 +14,6 @@ type FeedbackRepository interface {
 	Create(ctx context.Context, feedback *entity.Feedback) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Feedback, error)
 	List(ctx context.Context, filter *entity.GetFeedbacksFilter) ([]entity.Feedback, int64, error)
-	FindBySessionID(ctx context.Context, sessionID uuid.UUID) (*entity.Feedback, error)
 }
 
 type FeedbackService interface {

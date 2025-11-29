@@ -34,8 +34,7 @@ export type PhoneNumber = {
 
 export type Feedback = {
   id: string;
-  sessionId: string;
-  phoneNumber: string;
+  userId: string;
   rating: number; // 1-5
   comment?: string;
   createdAt: string;

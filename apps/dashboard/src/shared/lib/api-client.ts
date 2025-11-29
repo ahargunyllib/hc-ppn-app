@@ -10,8 +10,7 @@ export interface PaginationMeta {
 export interface FeedbacksResponse {
   feedbacks: Array<{
     id: string;
-    sessionId: string;
-    phoneNumber: string;
+    userId: string;
     rating: number;
     comment?: string;
     createdAt: string;
@@ -37,22 +36,18 @@ export interface PhoneNumbersResponse {
 }
 
 export const apiClient = {
-  async getFeedbacks(params: { page?: number; limit?: number; phoneNumber?: string; minRating?: number; maxRating?: number }): Promise<FeedbacksResponse> {
+  async getFeedbacks(params: { page?: number; limit?: number; userId?: string; minRating?: number; maxRating?: number }): Promise<FeedbacksResponse> {
     const queryParams = new URLSearchParams();
 
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
-    if (params.phoneNumber) queryParams.append("phoneNumber", params.phoneNumber);
+    if (params.userId) queryParams.append("userId", params.userId);
     if (params.minRating) queryParams.append("minRating", params.minRating.toString());
     if (params.maxRating) queryParams.append("maxRating", params.maxRating.toString());
 
     const url = `${API_BASE_URL}/api/v1/feedbacks?${queryParams.toString()}`;
 
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch feedbacks: ${response.statusText}`);
@@ -72,11 +67,7 @@ export const apiClient = {
 
     const url = `${API_BASE_URL}/api/v1/users?${queryParams.toString()}`;
 
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch phone numbers: ${response.statusText}`);

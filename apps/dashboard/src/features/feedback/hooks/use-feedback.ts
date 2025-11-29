@@ -5,22 +5,22 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 const FEEDBACK_KEY = ["feedback"];
 
 interface UseFeedbackOptions {
-  phoneNumber?: string;
+  userId?: string;
   minRating?: number;
   maxRating?: number;
   limit?: number;
 }
 
 export function useFeedback(options: UseFeedbackOptions = {}) {
-  const { phoneNumber, minRating, maxRating, limit = 10 } = options;
+  const { userId, minRating, maxRating, limit = 10 } = options;
 
   return useInfiniteQuery({
-    queryKey: [...FEEDBACK_KEY, { phoneNumber, minRating, maxRating, limit }],
+    queryKey: [...FEEDBACK_KEY, { userId, minRating, maxRating, limit }],
     queryFn: async ({ pageParam = 1 }) => {
       const response = await apiClient.getFeedbacks({
         page: pageParam,
         limit,
-        phoneNumber,
+        userId,
         minRating,
         maxRating,
       });
@@ -40,8 +40,7 @@ export function useFeedback(options: UseFeedbackOptions = {}) {
 
       const feedbacks: Feedback[] = allFeedbacks.map((feedback) => ({
         id: feedback.id,
-        sessionId: feedback.sessionId,
-        phoneNumber: feedback.phoneNumber,
+        userId: feedback.userId,
         rating: feedback.rating,
         comment: feedback.comment,
         createdAt: feedback.createdAt,

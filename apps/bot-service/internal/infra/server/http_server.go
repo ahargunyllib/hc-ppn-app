@@ -4,7 +4,6 @@ import (
 	feedbackcontroller "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/controller"
 	feedbackrepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/repository"
 	feedbackservice "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/service"
-	sessionrepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/session/repository"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/controller"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/repository"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/service"
@@ -96,9 +95,8 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	userService := service.NewUserService(userRepo, validatorService, uuidService)
 	controller.InitUserController(v1, userService, middleware)
 
-	sessionRepo := sessionrepository.NewSessionRepository(db)
 	feedbackRepo := feedbackrepository.NewFeedbackRepository(db)
-	feedbackService := feedbackservice.NewFeedbackService(feedbackRepo, sessionRepo, validatorService, uuidService)
+	feedbackService := feedbackservice.NewFeedbackService(feedbackRepo, validatorService, uuidService)
 	feedbackcontroller.InitFeedbackController(v1, feedbackService, middleware)
 
 	s.app.Use(func(c *fiber.Ctx) error {

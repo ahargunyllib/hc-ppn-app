@@ -1,6 +1,7 @@
 package whatsapp
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/entity"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/log"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/uuid"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -54,35 +56,24 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		"quotedMsg": quotedMsg,
 	}, "[WhatsAppBot] Received WhatsApp message")
 
-	s.statesMutex.RLock()
-	userState, exists := s.userStates[phoneNumber]
-	s.statesMutex.RUnlock()
+	session := s.getOrCreateSession(phoneNumber)
 
-	if exists && userState.WaitingForRating {
-		s.handleRatingInput(msg, phoneNumber, text, userState)
+	if session.WaitingForRating {
+		s.handleRatingInput(msg, phoneNumber, text, session)
 		return
 	}
 
-	if exists && userState.WaitingForComment {
-		s.handleCommentInput(msg, phoneNumber, text, userState)
+	if session.WaitingForComment {
+		s.handleCommentInput(msg, phoneNumber, text, session)
 		return
 	}
 
 	if strings.ToLower(strings.TrimSpace(text)) == "/selesai" {
-		s.handleEndSession(msg, phoneNumber)
+		s.handleEndSession(msg, phoneNumber, session)
 		return
 	}
 
-	session, err := s.sessionService.GetOrCreateSession(s.ctx, phoneNumber)
-	if err != nil {
-		s.clientLog.Errorf("Failed to get or create session: %v", err)
-		s.sendReply(msg, "Sorry, something went wrong. Please try again later.")
-		return
-	}
-
-	if err := s.sessionService.UpdateSessionActivity(s.ctx, session.ID); err != nil {
-		s.clientLog.Errorf("Failed to update session activity: %v", err)
-	}
+	s.updateSessionActivity(phoneNumber)
 
 	if strings.Contains(strings.ToLower(text), "sayang") {
 		res, err := s.genaiSvc.Chat(s.ctx, []string{text})
@@ -95,49 +86,52 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 	}
 }
 
-func (s *WhatsAppBot) handleEndSession(msg *events.Message, phoneNumber string) {
-	session, err := s.sessionService.GetOrCreateSession(s.ctx, phoneNumber)
-	if err != nil {
-		s.clientLog.Errorf("Failed to get session: %v", err)
-		s.sendReply(msg, "Sorry, something went wrong. Please try again later.")
-		return
-	}
-
-	s.statesMutex.Lock()
-	s.userStates[phoneNumber] = &UserState{
-		SessionID:        session.ID.String(),
-		WaitingForRating: true,
-	}
-	s.statesMutex.Unlock()
+func (s *WhatsAppBot) handleEndSession(msg *events.Message, phoneNumber string, session *Session) {
+	s.sessionsMux.Lock()
+	session.WaitingForRating = true
+	s.sessionsMux.Unlock()
 
 	s.sendReply(msg, "Terima kasih telah menggunakan layanan kami! 🙏\n\nSilakan berikan rating Anda (1-5):")
 }
 
-func (s *WhatsAppBot) handleRatingInput(msg *events.Message, phoneNumber string, text string, userState *UserState) {
+func (s *WhatsAppBot) handleRatingInput(msg *events.Message, phoneNumber string, text string, session *Session) {
 	rating, err := strconv.Atoi(strings.TrimSpace(text))
 	if err != nil || rating < 1 || rating > 5 {
 		s.sendReply(msg, "Rating tidak valid. Silakan masukkan angka antara 1-5:")
 		return
 	}
 
-	userState.Rating = rating
-	userState.WaitingForRating = false
-	userState.WaitingForComment = true
-
-	s.statesMutex.Lock()
-	s.userStates[phoneNumber] = userState
-	s.statesMutex.Unlock()
+	s.sessionsMux.Lock()
+	session.Rating = rating
+	session.WaitingForRating = false
+	session.WaitingForComment = true
+	s.sessionsMux.Unlock()
 
 	s.sendReply(msg, fmt.Sprintf("Terima kasih! Anda memberikan rating %d ⭐\n\nSilakan berikan komentar atau saran Anda (atau ketik '/skip' untuk melewati):", rating))
 }
 
-func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string, text string, userState *UserState) {
-	session, err := s.sessionService.GetOrCreateSession(s.ctx, phoneNumber)
+func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string, text string, session *Session) {
+	ctx := context.Background()
+
+	users, _, err := s.userRepo.List(ctx, &entity.GetUsersFilter{
+		Offset: 0,
+		Limit:  1,
+		Search: phoneNumber,
+	})
+
 	if err != nil {
-		s.clientLog.Errorf("Failed to get session: %v", err)
+		s.clientLog.Errorf("Failed to find user: %v", err)
 		s.sendReply(msg, "Sorry, something went wrong. Please try again later.")
 		return
 	}
+
+	if len(users) == 0 {
+		s.clientLog.Errorf("User not found for phone number: %s", phoneNumber)
+		s.sendReply(msg, "Sorry, user not found. Please contact support.")
+		return
+	}
+
+	user := users[0]
 
 	var comment *string
 	trimmedText := strings.TrimSpace(text)
@@ -153,33 +147,27 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 	}
 
 	feedback := &entity.Feedback{
-		ID:          feedbackID,
-		SessionID:   session.ID,
-		PhoneNumber: phoneNumber,
-		Rating:      userState.Rating,
-		Comment:     comment,
-		CreatedAt:   time.Now(),
+		ID:        feedbackID,
+		UserID:    user.ID,
+		Rating:    session.Rating,
+		Comment:   comment,
+		CreatedAt: time.Now(),
 	}
 
-	if err := s.feedbackRepo.Create(s.ctx, feedback); err != nil {
+	if err := s.feedbackRepo.Create(ctx, feedback); err != nil {
 		s.clientLog.Errorf("Failed to save feedback: %v", err)
 		s.sendReply(msg, "Sorry, something went wrong while saving your feedback.")
 		return
 	}
 
-	s.statesMutex.Lock()
-	delete(s.userStates, phoneNumber)
-	s.statesMutex.Unlock()
-
-	if err := s.sessionService.CloseSession(s.ctx, session.ID); err != nil {
-		s.clientLog.Errorf("Failed to close session: %v", err)
-	}
+	s.deleteSession(phoneNumber)
 
 	s.sendReply(msg, "Terima kasih atas feedback Anda! 🙏\n\nSampai jumpa lagi! 👋")
 
 	log.Info(log.CustomLogInfo{
 		"phone_number": phoneNumber,
-		"rating":       userState.Rating,
+		"user_id":      user.ID.String(),
+		"rating":       session.Rating,
 		"has_comment":  comment != nil,
 		"feedback_id":  feedback.ID.String(),
 	}, "[WhatsAppBot] Feedback received and saved")

@@ -8,20 +8,17 @@ import (
 
 type FeedbackService struct {
 	feedbackRepo contracts.FeedbackRepository
-	sessionRepo  contracts.ConversationSessionRepository
 	validator    validator.CustomValidatorInterface
 	uuidPkg      uuid.UUIDInterface
 }
 
 func NewFeedbackService(
 	feedbackRepo contracts.FeedbackRepository,
-	sessionRepo contracts.ConversationSessionRepository,
 	validatorService validator.CustomValidatorInterface,
 	uuidService uuid.UUIDInterface,
 ) *FeedbackService {
 	return &FeedbackService{
 		feedbackRepo: feedbackRepo,
-		sessionRepo:  sessionRepo,
 		validator:    validatorService,
 		uuidPkg:      uuidService,
 	}

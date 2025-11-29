@@ -9,12 +9,9 @@ import (
 	"time"
 
 	feedbackrepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/repository"
-	sessionrepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/session/repository"
-	sessionservice "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/session/service"
+	userrepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/repository"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/contracts"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/genai"
-	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/log"
-	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
@@ -24,22 +21,25 @@ import (
 )
 
 type WhatsAppBot struct {
-	ctx            context.Context
-	client         *whatsmeow.Client
-	dbLog          waLog.Logger
-	clientLog      waLog.Logger
-	genaiSvc       genai.CustomGenAIInterface
-	sessionService *sessionservice.SessionService
-	feedbackRepo   contracts.FeedbackRepository
-	userStates     map[string]*UserState
-	statesMutex    sync.RWMutex
+	ctx          context.Context
+	client       *whatsmeow.Client
+	dbLog        waLog.Logger
+	clientLog    waLog.Logger
+	genaiSvc     genai.CustomGenAIInterface
+	feedbackRepo contracts.FeedbackRepository
+	userRepo     contracts.UserRepository
+	sessions     map[string]*Session
+	sessionsMux  sync.RWMutex
 }
 
-type UserState struct {
-	SessionID         string
-	WaitingForRating  bool
-	WaitingForComment bool
-	Rating            int
+type Session struct {
+	PhoneNumber          string
+	LastMessageAt        time.Time
+	WaitingForRating     bool
+	WaitingForComment    bool
+	Rating               int
+	FeedbackPromptSent   bool
+	FeedbackPromptSentAt *time.Time
 }
 
 func NewWhatsAppBot(ctx context.Context, db *sql.DB, sqlxDB *sqlx.DB) (*WhatsAppBot, error) {
@@ -59,20 +59,18 @@ func NewWhatsAppBot(ctx context.Context, db *sql.DB, sqlxDB *sqlx.DB) (*WhatsApp
 	clientLog := waLog.Stdout("Client", "INFO", true)
 	client := whatsmeow.NewClient(deviceStore, clientLog)
 
-	sessionRepo := sessionrepository.NewSessionRepository(sqlxDB)
 	feedbackRepo := feedbackrepository.NewFeedbackRepository(sqlxDB)
-	logger := log.NewLogger()
-	sessionService := sessionservice.NewSessionService(sessionRepo, uuid.UUID, logger)
+	userRepo := userrepository.NewUserRepository(sqlxDB)
 
 	bot := &WhatsAppBot{
-		ctx:            ctx,
-		client:         client,
-		dbLog:          dbLog,
-		clientLog:      clientLog,
-		genaiSvc:       genai.GenAI,
-		sessionService: sessionService,
-		feedbackRepo:   feedbackRepo,
-		userStates:     make(map[string]*UserState),
+		ctx:          ctx,
+		client:       client,
+		dbLog:        dbLog,
+		clientLog:    clientLog,
+		genaiSvc:     genai.GenAI,
+		feedbackRepo: feedbackRepo,
+		userRepo:     userRepo,
+		sessions:     make(map[string]*Session),
 	}
 
 	return bot, nil
@@ -140,9 +138,65 @@ func (s *WhatsAppBot) sessionExpiryChecker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if err := s.sessionService.ProcessExpiredSessions(ctx); err != nil {
-				s.clientLog.Errorf("Failed to process expired sessions: %v", err)
+			s.processExpiredSessions()
+		}
+	}
+}
+
+func (s *WhatsAppBot) processExpiredSessions() {
+	s.sessionsMux.Lock()
+	defer s.sessionsMux.Unlock()
+
+	now := time.Now()
+	for phoneNumber, session := range s.sessions {
+		if session.WaitingForRating || session.WaitingForComment {
+			continue
+		}
+
+		if !session.FeedbackPromptSent && now.Sub(session.LastMessageAt) > 5*time.Minute {
+			session.FeedbackPromptSent = true
+			promptTime := now
+			session.FeedbackPromptSentAt = &promptTime
+			s.clientLog.Infof("Sending feedback prompt to %s due to inactivity", phoneNumber)
+		}
+
+		if session.FeedbackPromptSent && session.FeedbackPromptSentAt != nil {
+			if now.Sub(*session.FeedbackPromptSentAt) > 5*time.Minute {
+				s.clientLog.Infof("Auto-closing session for %s due to no feedback response", phoneNumber)
+				delete(s.sessions, phoneNumber)
 			}
 		}
 	}
+}
+
+func (s *WhatsAppBot) getOrCreateSession(phoneNumber string) *Session {
+	s.sessionsMux.Lock()
+	defer s.sessionsMux.Unlock()
+
+	session, exists := s.sessions[phoneNumber]
+	if !exists {
+		session = &Session{
+			PhoneNumber:   phoneNumber,
+			LastMessageAt: time.Now(),
+		}
+		s.sessions[phoneNumber] = session
+	}
+
+	return session
+}
+
+func (s *WhatsAppBot) updateSessionActivity(phoneNumber string) {
+	s.sessionsMux.Lock()
+	defer s.sessionsMux.Unlock()
+
+	if session, exists := s.sessions[phoneNumber]; exists {
+		session.LastMessageAt = time.Now()
+	}
+}
+
+func (s *WhatsAppBot) deleteSession(phoneNumber string) {
+	s.sessionsMux.Lock()
+	defer s.sessionsMux.Unlock()
+
+	delete(s.sessions, phoneNumber)
 }

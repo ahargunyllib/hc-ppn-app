@@ -7,23 +7,17 @@ import (
 )
 
 type Feedback struct {
-	ID          uuid.UUID `db:"id"`
-	SessionID   uuid.UUID `db:"session_id"`
-	PhoneNumber string    `db:"phone_number"`
-	Rating      int       `db:"rating"`
-	Comment     *string   `db:"comment"`
-	CreatedAt   time.Time `db:"created_at"`
-}
-
-type FeedbackWithSession struct {
-	Feedback
-	Session ConversationSession
+	ID        uuid.UUID `db:"id"`
+	UserID    uuid.UUID `db:"user_id"`
+	Rating    int       `db:"rating"`
+	Comment   *string   `db:"comment"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 type GetFeedbacksFilter struct {
-	Offset      int
-	Limit       int
-	PhoneNumber *string
-	MinRating   *int
-	MaxRating   *int
+	Offset    int
+	Limit     int
+	UserID    *uuid.UUID
+	MinRating *int
+	MaxRating *int
 }

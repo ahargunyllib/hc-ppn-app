@@ -7,30 +7,27 @@ import (
 )
 
 type FeedbackResponse struct {
-	ID          string  `json:"id"`
-	SessionID   string  `json:"sessionId"`
-	PhoneNumber string  `json:"phoneNumber"`
-	Rating      int     `json:"rating"`
-	Comment     *string `json:"comment,omitempty"`
-	CreatedAt   string  `json:"createdAt"`
+	ID        string  `json:"id"`
+	UserID    string  `json:"userId"`
+	Rating    int     `json:"rating"`
+	Comment   *string `json:"comment,omitempty"`
+	CreatedAt string  `json:"createdAt"`
 }
 
 func ToFeedbackResponse(feedback *entity.Feedback) FeedbackResponse {
 	return FeedbackResponse{
-		ID:          feedback.ID.String(),
-		SessionID:   feedback.SessionID.String(),
-		PhoneNumber: feedback.PhoneNumber,
-		Rating:      feedback.Rating,
-		Comment:     feedback.Comment,
-		CreatedAt:   feedback.CreatedAt.Format(time.RFC3339),
+		ID:        feedback.ID.String(),
+		UserID:    feedback.UserID.String(),
+		Rating:    feedback.Rating,
+		Comment:   feedback.Comment,
+		CreatedAt: feedback.CreatedAt.Format(time.RFC3339),
 	}
 }
 
 type CreateFeedbackRequest struct {
-	SessionID   string  `json:"sessionId" validate:"required,uuid"`
-	PhoneNumber string  `json:"phoneNumber" validate:"required,min=10,max=20"`
-	Rating      int     `json:"rating" validate:"required,min=1,max=5"`
-	Comment     *string `json:"comment,omitempty" validate:"omitempty,max=1000"`
+	UserID  string  `json:"userId" validate:"required,uuid"`
+	Rating  int     `json:"rating" validate:"required,min=1,max=5"`
+	Comment *string `json:"comment,omitempty" validate:"omitempty,max=1000"`
 }
 
 type CreateFeedbackResponse struct {
@@ -38,11 +35,11 @@ type CreateFeedbackResponse struct {
 }
 
 type GetFeedbacksQuery struct {
-	Page        int     `query:"page" validate:"omitempty,min=1"`
-	Limit       int     `query:"limit" validate:"omitempty,min=1,max=100"`
-	PhoneNumber *string `query:"phoneNumber" validate:"omitempty,max=20"`
-	MinRating   *int    `query:"minRating" validate:"omitempty,min=1,max=5"`
-	MaxRating   *int    `query:"maxRating" validate:"omitempty,min=1,max=5"`
+	Page      int     `query:"page" validate:"omitempty,min=1"`
+	Limit     int     `query:"limit" validate:"omitempty,min=1,max=100"`
+	UserID    *string `query:"userId" validate:"omitempty,uuid"`
+	MinRating *int    `query:"minRating" validate:"omitempty,min=1,max=5"`
+	MaxRating *int    `query:"maxRating" validate:"omitempty,min=1,max=5"`
 }
 
 type GetFeedbacksResponse struct {
