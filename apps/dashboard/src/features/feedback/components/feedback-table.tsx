@@ -1,9 +1,3 @@
-import { Button } from "@/shared/components/ui/button";
-import {
-  PreviewCard,
-  PreviewCardPopup,
-  PreviewCardTrigger,
-} from "@/shared/components/ui/preview-card";
 import {
   Table,
   TableBody,
@@ -31,35 +25,7 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
       accessorKey: "phoneNumber",
       header: "Phone Number",
       cell: ({ row }) => (
-        <PreviewCard>
-          <PreviewCardTrigger render={<Button size="xs" variant="ghost" />}>
-            {row.original.phoneNumber.phoneNumber}
-          </PreviewCardTrigger>
-          <PreviewCardPopup align="start">
-            <div className="flex w-full flex-col gap-2">
-              <h4 className="font-medium">Phone Number Details</h4>
-              <div className="flex w-full flex-1 flex-col gap-1 rounded-sm border bg-muted p-2 text-muted-foreground text-sm">
-                <p>
-                  <strong>Label:</strong> {row.original.phoneNumber.label}
-                </p>
-                <p>
-                  <strong>Assigned To:</strong>{" "}
-                  {row.original.phoneNumber.assignedTo}
-                </p>
-                <p>
-                  <strong>Created At:</strong>{" "}
-                  {new Date(
-                    row.original.phoneNumber.createdAt
-                  ).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-            </div>
-          </PreviewCardPopup>
-        </PreviewCard>
+        <span className="font-mono text-sm">{row.original.phoneNumber}</span>
       ),
     },
     {
@@ -75,13 +41,16 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
     {
       accessorKey: "comment",
       header: "Comment",
-      cell: ({ getValue }) => <p className="text-wrap">{getValue<string>()}</p>,
+      cell: ({ getValue }) => {
+        const comment = getValue<string | undefined>();
+        return <p className="text-wrap">{comment || "-"}</p>;
+      },
     },
     {
       accessorKey: "createdAt",
       header: "Created",
       cell: ({ getValue }) =>
-        new Date(getValue<Date>()).toLocaleDateString("en-US", {
+        new Date(getValue<string>()).toLocaleDateString("en-US", {
           year: "numeric",
           month: "short",
           day: "numeric",
