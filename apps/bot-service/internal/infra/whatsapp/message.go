@@ -8,6 +8,7 @@ import (
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/dto"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/log"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/phoneutil"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -34,7 +35,7 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		meta["view_once"] = true
 	}
 
-	phoneNumber := msg.Info.Sender.User
+	phoneNumber := phoneutil.NormalizeToE164(msg.Info.Sender.User)
 	chatJID := msg.Info.Chat
 
 	text := msg.Message.GetConversation()
@@ -116,8 +117,12 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 		PhoneNumber: phoneNumber,
 	})
 	if err != nil {
-		s.clientLog.Errorf("Failed to find user by phone number: %v", err)
-		s.sendReply(msg, "Sorry, something went wrong. Please try again later.")
+		// Silently ignore unauthorized phone numbers
+		log.Debug(log.CustomLogInfo{
+			"phone_number": phoneNumber,
+			"error":        err.Error(),
+		}, "[WhatsAppBot] Unauthorized phone number attempted feedback submission")
+		s.deleteSession(phoneNumber)
 		return
 	}
 
