@@ -78,6 +78,21 @@ func TestUserService_Create(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "invalid phone number - not E.164 format",
+			req: &dto.CreateUserRequest{
+				PhoneNumber: "123456",
+				Label:       "Test User",
+			},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
+					"body.phone_number": validator.ValidationError{
+						Message: "phone_number must be in E.164 format",
+					},
+				})
+			},
+			wantErr: true,
+		},
+		{
 			name: "uuid generation error",
 			req: &dto.CreateUserRequest{
 				PhoneNumber: "+1234567890",
@@ -629,6 +644,24 @@ func TestUserService_Update(t *testing.T) {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
 					"body": validator.ValidationError{
 						Message: "validation error",
+					},
+				})
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid phone number - not E.164 format",
+			param: &dto.UpdateUserParam{
+				ID: testID.String(),
+			},
+			req: &dto.UpdateUserRequest{
+				PhoneNumber: func() *string { s := "123456"; return &s }(),
+			},
+			setup: func() {
+				mockValidator.EXPECT().Validate(&dto.UpdateUserParam{ID: testID.String()}).Return(nil)
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
+					"body.phone_number": validator.ValidationError{
+						Message: "phone_number must be in E.164 format",
 					},
 				})
 			},
