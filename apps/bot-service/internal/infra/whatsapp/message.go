@@ -58,6 +58,23 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 
 	session := s.getSession(phoneNumber)
 	if session == nil {
+		userRes, err := s.userSvc.GetByPhoneNumber(s.ctx, &dto.GetUserByPhoneNumberParam{
+			PhoneNumber: phoneNumber,
+		})
+		if err != nil {
+			// Silently ignore unauthorized phone numbers
+			log.Debug(log.CustomLogInfo{
+				"phone_number": phoneNumber,
+				"error":        err.Error(),
+			}, "[WhatsAppBot] Unauthorized phone number attempted to start session")
+			return
+		}
+
+		log.Info(log.CustomLogInfo{
+			"phone_number": phoneNumber,
+			"user_id":      userRes.User.ID,
+		}, "[WhatsAppBot] Starting new session for authorized phone number")
+
 		session = s.createSession(phoneNumber, &chatJID)
 		s.sendMessage(chatJID, "Halo! Selamat datang di layanan WhatsApp kami. Jika anda sudah selesai, silakan ketik /selesai untuk memberikan feedback.")
 	}
