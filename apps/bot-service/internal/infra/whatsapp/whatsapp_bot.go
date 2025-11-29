@@ -26,8 +26,8 @@ import (
 )
 
 var (
-	sessionExpiryDuration = 1 * time.Minute // Duration after which inactive sessions are cleared
-	feedbackPromptDelay   = 1 * time.Minute // Duration of inactivity after which feedback prompt is sent
+	sessionExpiryDuration = 5 * time.Minute // Duration after which inactive sessions are cleared
+	feedbackPromptDelay   = 5 * time.Minute // Duration of inactivity after which feedback prompt is sent
 )
 
 type WhatsAppBot struct {
