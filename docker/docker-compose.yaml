@@ -1,0 +1,59 @@
+services:
+  reverse-proxy:
+    container_name: hc-ppn-nginx
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - hc-ppn-network
+  postgres:
+    image: postgres:16.1-alpine
+    container_name: hc-ppn-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=hc_ppn_app
+    volumes:
+      - hc-ppn-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U postgres -d hc_ppn_app'"]
+      start_interval: 5s
+      start_period: 5s
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - hc-ppn-network
+  dashboard:
+    build:
+      context: ..
+      dockerfile: apps/dashboard/Dockerfile
+    container_name: hc-ppn-dashboard
+    networks:
+      - hc-ppn-network
+  bot-service:
+    build:
+      context: ../apps/bot-service
+      dockerfile: Dockerfile
+    container_name: hc-ppn-bot-service
+    env_file:
+      - ../apps/bot-service/config/.env
+    volumes:
+      - ../apps/bot-service/data:/app/data
+      - ../apps/bot-service/config:/app/config
+    networks:
+      - hc-ppn-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+networks:
+  hc-ppn-network:
+    driver: bridge
+
+volumes:
+  hc-ppn-postgres-data:

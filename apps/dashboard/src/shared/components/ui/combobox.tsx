@@ -4,9 +4,9 @@ import { Combobox as ComboboxPrimitive } from "@base-ui-components/react/combobo
 import { ChevronsUpDownIcon, XIcon } from "lucide-react";
 import * as React from "react";
 
-import { cn } from "@/shared/lib/utils";
 import { Input } from "@/shared/components/ui/input";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import { cn } from "@/shared/lib/utils";
 
 const ComboboxContext = React.createContext<{
   chipsRef: React.RefObject<HTMLDivElement | null> | null;
@@ -16,15 +16,20 @@ const ComboboxContext = React.createContext<{
   multiple: false,
 });
 
-function Combobox<
+type ComboboxRootProps<
   ItemValue,
-  SelectedValue = ItemValue,
-  Multiple extends boolean | undefined = false,
->(props: ComboboxPrimitive.Root.Props<ItemValue, SelectedValue, Multiple>) {
+  Multiple extends boolean | undefined,
+> = Parameters<typeof ComboboxPrimitive.Root<ItemValue, Multiple>>[0];
+
+function Combobox<ItemValue, Multiple extends boolean | undefined = false>(
+  props: ComboboxPrimitive.Root.Props<ItemValue, Multiple>,
+) {
   const chipsRef = React.useRef<HTMLDivElement | null>(null);
   return (
     <ComboboxContext.Provider value={{ chipsRef, multiple: !!props.multiple }}>
-      <ComboboxPrimitive.Root {...props} />
+      <ComboboxPrimitive.Root
+        {...(props as ComboboxRootProps<ItemValue, Multiple>)}
+      />
     </ComboboxContext.Provider>
   );
 }
@@ -337,21 +342,6 @@ function ComboboxChipRemove(props: ComboboxPrimitive.ChipRemove.Props) {
 }
 
 export {
-  Combobox,
-  ComboboxInput,
-  ComboboxTrigger,
-  ComboboxPopup,
-  ComboboxItem,
-  ComboboxSeparator,
-  ComboboxGroup,
-  ComboboxGroupLabel,
-  ComboboxEmpty,
-  ComboboxValue,
-  ComboboxList,
-  ComboboxClear,
-  ComboboxStatus,
-  ComboboxRow,
-  ComboboxCollection,
-  ComboboxChips,
-  ComboboxChip,
+  Combobox, ComboboxChip, ComboboxChips, ComboboxClear, ComboboxCollection, ComboboxEmpty, ComboboxGroup,
+  ComboboxGroupLabel, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxRow, ComboboxSeparator, ComboboxStatus, ComboboxTrigger, ComboboxValue
 };

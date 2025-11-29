@@ -2,12 +2,11 @@ package whatsapp
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 
-	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/infra/env"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/genai"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
@@ -23,13 +22,13 @@ type WhatsAppBot struct {
 	genaiSvc  genai.CustomGenAIInterface
 }
 
-func NewWhatsAppBot(ctx context.Context) (*WhatsAppBot, error) {
+func NewWhatsAppBot(ctx context.Context, db *sql.DB) (*WhatsAppBot, error) {
 	dbLog := waLog.Stdout("Database", "INFO", true)
 
-	address := fmt.Sprintf("file:%s?_foreign_keys=on", env.AppEnv.BotDBPath)
-	storeContainer, err := sqlstore.New(ctx, "sqlite3", address, dbLog)
+	storeContainer := sqlstore.NewWithDB(db, "postgres", dbLog)
+	err := storeContainer.Upgrade(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create WhatsApp store: %w", err)
+		return nil, fmt.Errorf("failed to upgrade WhatsApp database store: %w", err)
 	}
 
 	deviceStore, err := storeContainer.GetFirstDevice(ctx)
