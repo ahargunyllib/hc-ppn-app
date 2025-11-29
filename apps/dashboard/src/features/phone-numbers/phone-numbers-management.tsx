@@ -1,3 +1,4 @@
+import DataPagination from "@/shared/components/data-pagination";
 import {
   Alert,
   AlertDescription,
@@ -13,12 +14,23 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { useGetUsers } from "@/shared/repositories/user/query";
 import { CircleAlertIcon, Plus } from "lucide-react";
+import { useState } from "react";
 import { PhoneNumbersTable } from "./components/phone-numbers-table";
-import { usePhoneNumbers } from "./hooks/use-phone-numbers";
 
 export function PhoneNumbersManagement() {
-  const { data: phoneNumbers, isLoading, error } = usePhoneNumbers();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  const {
+    data,
+    isLoading,
+    error,
+    // fetchNextPage,
+    // hasNextPage,
+    // isFetchingNextPage,
+  } = useGetUsers({ page, limit });
 
   const handleAdd = () => {
     // TODO
@@ -64,7 +76,17 @@ export function PhoneNumbersManagement() {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <PhoneNumbersTable data={phoneNumbers || []} />
+        <PhoneNumbersTable
+          data={data?.pages.flatMap((p) => p.payload.users) || []}
+        />
+        <DataPagination
+          currentLimit={limit}
+          currentPage={page}
+          setLimit={setLimit}
+          setPage={setPage}
+          totalData={data?.pages[0].payload.meta.pagination.total_data || 0}
+          totalPage={data?.pages[0].payload.meta.pagination.total_page || 1}
+        />
       </CardContent>
     </Card>
   );

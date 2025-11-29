@@ -1,3 +1,4 @@
+import DataPagination from "@/shared/components/data-pagination";
 import {
   Alert,
   AlertDescription,
@@ -11,19 +12,22 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { Button } from "@/shared/components/ui/button";
+import { useGetFeedbacks } from "@/shared/repositories/feedback/query";
+import { useState } from "react";
 import { FeedbackTable } from "./components/feedback-table";
-import { useFeedback } from "./hooks/use-feedback";
 
 export function FeedbackDashboard() {
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
   const {
     data,
     isLoading,
     error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useFeedback({ limit: 10 });
+    // fetchNextPage,
+    // hasNextPage,
+    // isFetchingNextPage,
+  } = useGetFeedbacks({ page, limit });
 
   if (isLoading) {
     return (
@@ -47,50 +51,31 @@ export function FeedbackDashboard() {
     return (
       <Alert variant="error">
         <AlertTitle>Error loading feedback</AlertTitle>
-        <AlertDescription>
-          {error.message || "Unknown error"}
-        </AlertDescription>
+        <AlertDescription>{error.message || "Unknown error"}</AlertDescription>
       </Alert>
     );
   }
-
-  const feedbacks = data?.feedbacks || [];
-  const totalData = data?.totalData || 0;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Feedback Dashboard</CardTitle>
         <CardDescription>
-          Overview of user feedback and satisfaction metrics. Total: {totalData} feedbacks
+          Overview of user feedback and satisfaction metrics.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <FeedbackTable data={feedbacks} />
-
-        {hasNextPage && (
-          <div className="flex justify-center">
-            <Button
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-              variant="outline"
-            >
-              {isFetchingNextPage ? "Loading more..." : "Load More"}
-            </Button>
-          </div>
-        )}
-
-        {!hasNextPage && feedbacks.length > 0 && (
-          <p className="text-center text-muted-foreground text-sm">
-            No more feedbacks to load
-          </p>
-        )}
-
-        {feedbacks.length === 0 && (
-          <p className="text-center text-muted-foreground">
-            No feedbacks yet
-          </p>
-        )}
+        <FeedbackTable
+          data={data?.pages.flatMap((p) => p.payload.feedbacks) || []}
+        />
+        <DataPagination
+          currentLimit={limit}
+          currentPage={page}
+          setLimit={setLimit}
+          setPage={setPage}
+          totalData={data?.pages[0].payload.meta.pagination.total_data || 0}
+          totalPage={data?.pages[0].payload.meta.pagination.total_page || 1}
+        />
       </CardContent>
     </Card>
   );

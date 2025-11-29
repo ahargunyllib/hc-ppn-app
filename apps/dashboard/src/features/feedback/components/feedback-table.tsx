@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
-import type { Feedback } from "@/shared/types/dashboard";
+import type { Feedback } from "@/shared/types/feedback";
 import {
   flexRender,
   getCoreRowModel,

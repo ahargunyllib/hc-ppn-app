@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
-import type { PhoneNumber } from "@/shared/types/dashboard";
+import type { User } from "@/shared/types/user";
 import {
   flexRender,
   getCoreRowModel,
@@ -15,11 +15,11 @@ import {
 } from "@tanstack/react-table";
 
 type PhoneNumbersTableProps = {
-  data: PhoneNumber[];
+  data: User[];
 };
 
 export function PhoneNumbersTable({ data }: PhoneNumbersTableProps) {
-  const columns: ColumnDef<PhoneNumber>[] = [
+  const columns: ColumnDef<User>[] = [
     {
       accessorKey: "phoneNumber",
       header: "Phone Number",
