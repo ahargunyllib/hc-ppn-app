@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/dto"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/dify"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/log"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/phoneutil"
 	"go.mau.fi/whatsmeow/proto/waE2E"
@@ -96,15 +97,37 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 
 	s.updateSessionActivity(phoneNumber)
 
-	if strings.Contains(strings.ToLower(text), "sayang") {
-		res, err := s.genaiSvc.Chat(s.ctx, []string{text})
-		if err != nil {
-			s.sendReply(msg, "Sorry, I couldn't process your message right now.")
-			return
-		}
-
-		s.sendReply(msg, res)
+	difyReq := &dify.Request{
+		Inputs:         make(map[string]any),
+		Query:          text,
+		ResponseMode:   "blocking",
+		ConversationID: session.ConversationID,
+		User:           phoneNumber,
+		Files:          []any{},
 	}
+
+	log.Debug(log.CustomLogInfo{
+		"difyReq": difyReq,
+	}, "[WhatsAppBot] Sending message to Dify AI")
+
+	difyResp, err := s.difySvc.ChatMessages(s.ctx, difyReq)
+	if err != nil {
+		s.clientLog.Errorf("Failed to get response from Dify AI: %v", err)
+		s.sendReply(msg, "Maaf, saya tidak dapat memproses pesan Anda saat ini. Silakan coba lagi nanti.")
+		return
+	}
+
+	log.Debug(log.CustomLogInfo{
+		"difyResp": difyResp,
+	}, "[WhatsAppBot] Received response from Dify AI")
+
+	if difyResp.ConversationID != "" && session.ConversationID == "" {
+		s.sessionsMux.Lock()
+		session.ConversationID = difyResp.ConversationID
+		s.sessionsMux.Unlock()
+	}
+
+	s.sendReply(msg, difyResp.Answer)
 }
 
 func (s *WhatsAppBot) handleEndSession(msg *events.Message, session *Session) {

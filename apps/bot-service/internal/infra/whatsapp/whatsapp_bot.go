@@ -13,7 +13,7 @@ import (
 	feedbackService "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/service"
 	userRepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/repository"
 	userService "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/service"
-	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/genai"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/dify"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/uuid"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/validator"
 	"github.com/jmoiron/sqlx"
@@ -35,7 +35,7 @@ type WhatsAppBot struct {
 	client      *whatsmeow.Client
 	dbLog       waLog.Logger
 	clientLog   waLog.Logger
-	genaiSvc    genai.CustomGenAIInterface
+	difySvc     dify.CustomDifyInterface
 	feedbackSvc contracts.FeedbackService
 	userSvc     contracts.UserService
 	sessions    map[string]*Session
@@ -44,13 +44,14 @@ type WhatsAppBot struct {
 
 type Session struct {
 	PhoneNumber          string
+	ConversationID       string
 	LastMessageAt        time.Time
 	WaitingForRating     bool
 	WaitingForComment    bool
 	Rating               int
 	FeedbackPromptSent   bool
 	FeedbackPromptSentAt *time.Time
-	ChatJID                  *types.JID
+	ChatJID              *types.JID
 }
 
 func NewWhatsAppBot(ctx context.Context, db *sql.DB, sqlxDB *sqlx.DB) (*WhatsAppBot, error) {
@@ -84,7 +85,7 @@ func NewWhatsAppBot(ctx context.Context, db *sql.DB, sqlxDB *sqlx.DB) (*WhatsApp
 		client:      client,
 		dbLog:       dbLog,
 		clientLog:   clientLog,
-		genaiSvc:    genai.GenAI,
+		difySvc:     dify.Dify,
 		feedbackSvc: feedbackSvc,
 		userSvc:     userSvc,
 		sessions:    make(map[string]*Session),
