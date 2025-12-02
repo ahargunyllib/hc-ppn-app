@@ -51,6 +51,7 @@ type Session struct {
 	Rating               int
 	FeedbackPromptSent   bool
 	FeedbackPromptSentAt *time.Time
+	IsAutoPrompt         bool
 	ChatJID              *types.JID
 }
 

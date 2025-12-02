@@ -7,6 +7,11 @@ import (
 	"go.mau.fi/whatsmeow/types"
 )
 
+func getJakartaTime() time.Time {
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	return time.Now().In(loc)
+}
+
 func getTimeBasedGreeting(t time.Time) string {
 	hour := t.Hour()
 
@@ -48,19 +53,25 @@ func (s *WhatsAppBot) processExpiredSessions() {
 
 		if !session.FeedbackPromptSent && now.Sub(session.LastMessageAt) > feedbackPromptDelay {
 			session.FeedbackPromptSent = true
+			session.IsAutoPrompt = true
 			promptTime := now
 			session.FeedbackPromptSentAt = &promptTime
 			s.clientLog.Infof("Sending feedback prompt to %s due to inactivity", phoneNumber)
 
-			greeting := getTimeBasedGreeting(now)
-			feedbackMessage := greeting + " Bapak/Ibu, untuk meningkatkan kualitas pelayanan kami, mohon dibantu penilaiannya 🙏🏻\n\nApabila berkenan, mohon kesediaan Bapak/Ibu untuk memberikan feedback terhadap kualitas pelayanan kami dengan rating 1-5.\n\nAdapun 3 poin penilaian sebagai berikut:\n1. Kecepatan dalam merespon pertanyaan/keluhan\n2. Kualitas komunikasi dan informasi yang diberikan\n3. Ketepatan dan kegunaan solusi yang diberikan\n\nUntuk memberikan feedback, silakan ketik /selesai\n\n*Skala Penilaian:*\n1 = Sangat Tidak Memuaskan\n2 = Tidak Memuaskan\n3 = Cukup Memuaskan\n4 = Memuaskan\n5 = Sangat Memuaskan"
+			greeting := getTimeBasedGreeting(getJakartaTime())
+			feedbackMessage := greeting + " Bapak/Ibu, untuk meningkatkan kualitas pelayanan kami, mohon dibantu penilaiannya 🙏🏻\n\nApabila berkenan, mohon kesediaan Bapak/Ibu untuk memberikan feedback terhadap kualitas pelayanan kami dengan rating 1-5.\n\nAdapun 3 poin penilaian sebagai berikut:\n1. Kecepatan dalam merespon pertanyaan/keluhan\n2. Kualitas komunikasi dan informasi yang diberikan\n3. Ketepatan dan kegunaan solusi yang diberikan\n\nUntuk memberikan feedback, silakan ketik /selesai\n\n⏱️ *Catatan:* Jika tidak ada respons dalam 5 menit, kami akan mencatat feedback Anda sebagai rating 5 bintang sebagai bentuk kepuasan terhadap layanan kami."
 
 			s.sendMessage(*session.ChatJID, feedbackMessage)
 		}
 
 		if session.FeedbackPromptSent && session.FeedbackPromptSentAt != nil {
 			if now.Sub(*session.FeedbackPromptSentAt) > sessionExpiryDuration {
-				s.clientLog.Infof("Auto-closing session for %s due to no feedback response", phoneNumber)
+				if session.IsAutoPrompt {
+					s.clientLog.Infof("Auto-submitting feedback rating 5 for %s due to no response", phoneNumber)
+					s.autoSubmitFeedback(phoneNumber, *session.ChatJID)
+				} else {
+					s.clientLog.Infof("Auto-closing session for %s due to no feedback response", phoneNumber)
+				}
 				delete(s.sessions, phoneNumber)
 			}
 		}

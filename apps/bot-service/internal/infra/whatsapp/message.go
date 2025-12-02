@@ -77,7 +77,9 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		}, "[WhatsAppBot] Starting new session for authorized phone number")
 
 		session = s.createSession(phoneNumber, &chatJID)
-		s.sendMessage(chatJID, "Halo! Selamat datang di layanan WhatsApp kami. Ada yang bisa kami bantu?")
+		greeting := getTimeBasedGreeting(getJakartaTime())
+		welcomeMessage := fmt.Sprintf("%s! 👋\n\nSelamat datang di *Layanan WhatsApp HC PPN*\n\nSaya adalah asisten virtual yang siap membantu Anda dengan pertanyaan seputar layanan kami.\n\n💡 *Tips:*\n• Ketik /help untuk melihat panduan\n• Ketik /selesai untuk mengakhiri sesi\n\nAda yang bisa saya bantu hari ini?", greeting)
+		s.sendMessage(chatJID, welcomeMessage)
 		return
 	}
 
@@ -88,6 +90,11 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 
 	if session.WaitingForComment {
 		s.handleCommentInput(msg, phoneNumber, text, session)
+		return
+	}
+
+	if strings.ToLower(strings.TrimSpace(text)) == "/help" {
+		s.handleHelpCommand(msg)
 		return
 	}
 
@@ -136,13 +143,13 @@ func (s *WhatsAppBot) handleEndSession(msg *events.Message, session *Session) {
 	session.WaitingForRating = true
 	s.sessionsMux.Unlock()
 
-	s.sendReply(msg, "Terima kasih telah menggunakan layanan kami! 🙏\n\nSilakan berikan rating Anda (1-5):")
+	s.sendReply(msg, "*[Langkah 1/2]* ⭐\n\nTerima kasih telah menggunakan layanan kami! 🙏\n\nSilakan berikan rating Anda (1-5):\n\n*Skala Penilaian:*\n1 = Sangat Tidak Memuaskan\n2 = Tidak Memuaskan\n3 = Cukup Memuaskan\n4 = Memuaskan\n5 = Sangat Memuaskan")
 }
 
 func (s *WhatsAppBot) handleRatingInput(msg *events.Message, text string, session *Session) {
 	rating, err := strconv.Atoi(strings.TrimSpace(text))
 	if err != nil || rating < 1 || rating > 5 {
-		s.sendReply(msg, "Rating tidak valid. Silakan masukkan angka antara 1-5:")
+		s.sendReply(msg, "Mohon maaf, rating harus berupa angka dari 1 sampai 5 ya 😊\n\n*Contoh:* ketik angka *3* untuk rating 3 bintang\n\nSilakan coba lagi:")
 		return
 	}
 
@@ -152,7 +159,7 @@ func (s *WhatsAppBot) handleRatingInput(msg *events.Message, text string, sessio
 	session.WaitingForComment = true
 	s.sessionsMux.Unlock()
 
-	s.sendReply(msg, fmt.Sprintf("Terima kasih! Anda memberikan rating %d ⭐\n\nSilakan berikan komentar atau saran Anda (atau ketik '/skip' untuk melewati):", rating))
+	s.sendReply(msg, getRatingConfirmationMessage(rating))
 }
 
 func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string, text string, session *Session) {
@@ -184,13 +191,13 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 	})
 	if err != nil {
 		s.clientLog.Errorf("Failed to save feedback: %v", err)
-		s.sendReply(msg, "Sorry, something went wrong while saving your feedback.")
+		s.sendReply(msg, "Maaf, terjadi kesalahan saat menyimpan feedback Anda. Silakan coba lagi nanti.")
 		return
 	}
 
 	s.deleteSession(phoneNumber)
 
-	s.sendReply(msg, "Terima kasih atas feedback Anda! 🙏\n\nSampai jumpa lagi! 👋")
+	s.sendReply(msg, getGoodbyeMessage(session.Rating, comment != nil))
 
 	log.Info(log.CustomLogInfo{
 		"phone_number": phoneNumber,
@@ -226,4 +233,93 @@ func (s *WhatsAppBot) sendMessage(to types.JID, text string) {
 	if err != nil {
 		s.clientLog.Errorf("Failed to send WhatsApp message: " + err.Error())
 	}
+}
+
+func getRatingConfirmationMessage(rating int) string {
+	var emoji, response string
+
+	switch rating {
+	case 5:
+		emoji = "🌟"
+		response = "Terima kasih atas rating sempurna!"
+	case 4:
+		emoji = "⭐"
+		response = "Terima kasih atas rating yang baik!"
+	case 3:
+		emoji = "⭐"
+		response = "Terima kasih atas rating Anda"
+	case 2:
+		emoji = "💭"
+		response = "Terima kasih atas masukan Anda"
+	case 1:
+		emoji = "💬"
+		response = "Terima kasih telah berbagi pengalaman Anda"
+	default:
+		emoji = "⭐"
+		response = "Terima kasih atas rating Anda"
+	}
+
+	return fmt.Sprintf("%s %s\nRating: %d/5\n\n*[Langkah 2/2]* 📝\n\nBantu kami lebih baik lagi dengan memberikan komentar atau saran Anda.\n\n💡 Ketik '/skip' jika ingin melewati.", emoji, response, rating)
+}
+
+func getGoodbyeMessage(rating int, hasComment bool) string {
+	var message string
+
+	if rating >= 4 {
+		message = "Senang mendengar pengalaman Anda positif! 😊\n\n"
+	} else if rating == 3 {
+		message = "Terima kasih atas masukan Anda. Kami akan terus berusaha lebih baik! 💪\n\n"
+	} else {
+		message = "Mohon maaf atas ketidaknyamanannya. Kami akan segera memperbaiki layanan kami. 🙏\n\n"
+	}
+
+	if hasComment {
+		message += "Feedback Anda sangat berharga bagi kami dan akan kami gunakan untuk meningkatkan kualitas layanan.\n\n"
+	}
+
+	greeting := getTimeBasedGreeting(getJakartaTime())
+	message += fmt.Sprintf("Sampai jumpa lagi! 👋\n\n%s dan semoga harimu menyenangkan! ✨", greeting)
+
+	return message
+}
+
+func (s *WhatsAppBot) handleHelpCommand(msg *events.Message) {
+	helpMessage := "📖 *Panduan Penggunaan Bot*\n\nSaya adalah asisten virtual yang siap membantu Anda 🤖\n\n*Command yang tersedia:*\n• /help - Menampilkan panduan ini\n• /selesai - Mengakhiri sesi dan memberikan feedback\n\nAnda bisa mengirim pertanyaan kapan saja, dan saya akan membantu menjawabnya! 💬"
+	s.sendReply(msg, helpMessage)
+}
+
+func (s *WhatsAppBot) autoSubmitFeedback(phoneNumber string, chatJID types.JID) {
+	ctx := context.Background()
+
+	userRes, err := s.userSvc.GetByPhoneNumber(ctx, &dto.GetUserByPhoneNumberParam{
+		PhoneNumber: phoneNumber,
+	})
+	if err != nil {
+		log.Debug(log.CustomLogInfo{
+			"phone_number": phoneNumber,
+			"error":        err.Error(),
+		}, "[WhatsAppBot] Failed to get user for auto-feedback submission")
+		return
+	}
+
+	rating := 5
+	_, err = s.feedbackSvc.Create(ctx, &dto.CreateFeedbackRequest{
+		UserID:  userRes.User.ID,
+		Rating:  rating,
+		Comment: nil,
+	})
+	if err != nil {
+		s.clientLog.Errorf("Failed to auto-submit feedback: %v", err)
+		return
+	}
+
+	confirmationMessage := "Terima kasih! ✨\n\nKarena tidak ada respons, kami mencatat feedback Anda dengan rating 5 bintang ⭐\n\nKami menghargai waktu Anda dan berharap layanan kami memuaskan. Sampai jumpa lagi! 👋"
+	s.sendMessage(chatJID, confirmationMessage)
+
+	log.Info(log.CustomLogInfo{
+		"phone_number": phoneNumber,
+		"user_id":      userRes.User.ID,
+		"rating":       rating,
+		"auto_submit":  true,
+	}, "[WhatsAppBot] Auto-submitted feedback with rating 5")
 }
