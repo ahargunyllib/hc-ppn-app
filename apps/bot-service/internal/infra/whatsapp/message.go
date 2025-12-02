@@ -78,7 +78,7 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 
 		session = s.createSession(phoneNumber, &chatJID)
 		greeting := getTimeBasedGreeting(getJakartaTime())
-		welcomeMessage := fmt.Sprintf("%s! 👋\n\nSelamat datang di *Layanan WhatsApp HC PPN*\n\nSaya adalah asisten virtual yang siap membantu Anda dengan pertanyaan seputar layanan kami.\n\n💡 *Tips:*\n• Ketik /help untuk melihat panduan\n• Ketik /selesai untuk mengakhiri sesi\n\nAda yang bisa saya bantu hari ini?", greeting)
+		welcomeMessage := fmt.Sprintf("%s! 👋\n\nSelamat datang di *Layanan WhatsApp HC PPN*\n\nSaya adalah asisten virtual yang siap membantu Anda dengan pertanyaan seputar layanan kami.\n\nAda yang bisa saya bantu hari ini?", greeting)
 		s.sendMessage(chatJID, welcomeMessage)
 		return
 	}
