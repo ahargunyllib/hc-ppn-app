@@ -77,7 +77,8 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		}, "[WhatsAppBot] Starting new session for authorized phone number")
 
 		session = s.createSession(phoneNumber, &chatJID)
-		s.sendMessage(chatJID, "Halo! Selamat datang di layanan WhatsApp kami. Jika anda sudah selesai, silakan ketik /selesai untuk memberikan feedback.")
+		s.sendMessage(chatJID, "Halo! Selamat datang di layanan WhatsApp kami. Ada yang bisa kami bantu?")
+		return
 	}
 
 	if session.WaitingForRating {

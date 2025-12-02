@@ -7,6 +7,21 @@ import (
 	"go.mau.fi/whatsmeow/types"
 )
 
+func getTimeBasedGreeting(t time.Time) string {
+	hour := t.Hour()
+
+	switch {
+	case hour >= 4 && hour < 11:
+		return "Selamat pagi"
+	case hour >= 11 && hour < 15:
+		return "Selamat siang"
+	case hour >= 15 && hour < 18:
+		return "Selamat sore"
+	default:
+		return "Selamat malam"
+	}
+}
+
 func (s *WhatsAppBot) sessionExpiryChecker(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
@@ -36,7 +51,11 @@ func (s *WhatsAppBot) processExpiredSessions() {
 			promptTime := now
 			session.FeedbackPromptSentAt = &promptTime
 			s.clientLog.Infof("Sending feedback prompt to %s due to inactivity", phoneNumber)
-			s.sendMessage(*session.ChatJID, "Sudah cukup lama sejak kami menerima pesan dari Anda. Mohon berikan feedback tentang layanan kami. Untuk mengirim feedback, ketik /selesai.")
+
+			greeting := getTimeBasedGreeting(now)
+			feedbackMessage := greeting + " Bapak/Ibu, untuk meningkatkan kualitas pelayanan kami, mohon dibantu penilaiannya 🙏🏻\n\nApabila berkenan, mohon kesediaan Bapak/Ibu untuk memberikan feedback terhadap kualitas pelayanan kami dengan rating 1-5.\n\nAdapun 3 poin penilaian sebagai berikut:\n1. Kecepatan dalam merespon pertanyaan/keluhan\n2. Kualitas komunikasi dan informasi yang diberikan\n3. Ketepatan dan kegunaan solusi yang diberikan\n\nUntuk memberikan feedback, silakan ketik /selesai\n\n*Skala Penilaian:*\n1 = Sangat Tidak Memuaskan\n2 = Tidak Memuaskan\n3 = Cukup Memuaskan\n4 = Memuaskan\n5 = Sangat Memuaskan"
+
+			s.sendMessage(*session.ChatJID, feedbackMessage)
 		}
 
 		if session.FeedbackPromptSent && session.FeedbackPromptSentAt != nil {
