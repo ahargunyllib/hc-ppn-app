@@ -161,7 +161,7 @@ func (r *feedbackRepository) GetMetrics(ctx context.Context) (float64, error) {
 	query := `
 		SELECT
 			COALESCE(
-				COUNT(CASE WHEN rating >= 4 THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0),
+				(SUM(rating) * 100.0) / NULLIF(COUNT(*) * 5, 0),
 				0
 			) AS satisfaction_score
 		FROM feedbacks
@@ -176,11 +176,11 @@ func (r *feedbackRepository) GetMetrics(ctx context.Context) (float64, error) {
 	return satisfactionScore, nil
 }
 
-func (r *feedbackRepository) GetSatisfactionTrend(ctx context.Context, days int) ([]map[string]any, error) {
+func (r *feedbackRepository) GetSatisfactionTrend(ctx context.Context) ([]entity.SatisfactionTrendRow, error) {
 	query := `
 		WITH date_series AS (
 			SELECT generate_series(
-				CURRENT_DATE - $1 * INTERVAL '1 day',
+				CURRENT_DATE - 30 * INTERVAL '1 day',
 				CURRENT_DATE,
 				INTERVAL '1 day'
 			)::date AS date
@@ -194,23 +194,14 @@ func (r *feedbackRepository) GetSatisfactionTrend(ctx context.Context, days int)
 		ORDER BY ds.date ASC
 	`
 
-	var results []map[string]any
-	rows, err := r.db.QueryxContext(ctx, query, days)
+	var results []entity.SatisfactionTrendRow
+	err := r.db.SelectContext(ctx, &results, query)
 	if err != nil {
 		return nil, errx.ErrInternalServer.WithLocation("feedbackRepository.GetSatisfactionTrend").WithError(err)
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		result := make(map[string]any)
-		if err := rows.MapScan(result); err != nil {
-			return nil, errx.ErrInternalServer.WithLocation("feedbackRepository.GetSatisfactionTrend.Scan").WithError(err)
-		}
-		results = append(results, result)
-	}
 
 	if results == nil {
-		results = []map[string]any{}
+		results = []entity.SatisfactionTrendRow{}
 	}
 
 	return results, nil

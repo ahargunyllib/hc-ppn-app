@@ -23,3 +23,8 @@ type GetFeedbacksFilter struct {
 	MinRating *int
 	MaxRating *int
 }
+
+type SatisfactionTrendRow struct {
+	Date            time.Time `db:"date"`
+	AvgSatisfaction float64   `db:"avg_satisfaction"`
+}

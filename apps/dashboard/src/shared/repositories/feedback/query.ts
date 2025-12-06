@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getFeedbacks, getFeedbackMetrics, getSatisfactionTrend } from "./action";
-import type { GetFeedbacksQuery, GetSatisfactionTrendQuery } from "./dto";
+import type { GetFeedbacksQuery } from "./dto";
 
 export const useGetFeedbacks = (query?: GetFeedbacksQuery) =>
   useQuery({
@@ -14,8 +14,8 @@ export const useGetFeedbackMetrics = () =>
     queryFn: () => getFeedbackMetrics(),
   });
 
-export const useGetSatisfactionTrend = (query?: GetSatisfactionTrendQuery) =>
+export const useGetSatisfactionTrend = () =>
   useQuery({
-    queryKey: ["satisfactionTrend", query],
-    queryFn: () => getSatisfactionTrend({ ...query }),
+    queryKey: ["satisfactionTrend"],
+    queryFn: () => getSatisfactionTrend(),
   });

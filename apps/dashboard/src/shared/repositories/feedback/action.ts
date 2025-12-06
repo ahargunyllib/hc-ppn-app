@@ -1,5 +1,5 @@
 import { api } from "@/shared/lib/api-client";
-import type { GetFeedbacksQuery, GetFeedbacksResponse, GetFeedbackMetricsResponse, GetSatisfactionTrendQuery, GetSatisfactionTrendResponse } from "./dto";
+import type { GetFeedbacksQuery, GetFeedbacksResponse, GetFeedbackMetricsResponse, GetSatisfactionTrendResponse } from "./dto";
 
 export const getFeedbacks = async (query?: GetFeedbacksQuery) => {
   const response = await api.get<GetFeedbacksResponse>("/feedbacks", {
@@ -13,9 +13,7 @@ export const getFeedbackMetrics = async () => {
   return response.data;
 };
 
-export const getSatisfactionTrend = async (query?: GetSatisfactionTrendQuery) => {
-  const response = await api.get<GetSatisfactionTrendResponse>("/feedbacks/satisfaction-trend", {
-    params: query,
-  });
+export const getSatisfactionTrend = async () => {
+  const response = await api.get<GetSatisfactionTrendResponse>("/feedbacks/satisfaction-trend");
   return response.data;
 };

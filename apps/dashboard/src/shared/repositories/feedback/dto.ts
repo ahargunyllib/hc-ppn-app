@@ -22,10 +22,6 @@ export type GetFeedbackMetricsResponse = APIResponse<{
   satisfactionScore: number;
 }>;
 
-export type GetSatisfactionTrendQuery = {
-  days?: number;
-};
-
 export type GetSatisfactionTrendResponse = APIResponse<{
   trend: SatisfactionTrendData[];
 }>;

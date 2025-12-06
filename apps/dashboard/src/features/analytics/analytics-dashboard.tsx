@@ -47,7 +47,7 @@ export function AnalyticsDashboard() {
     data: satisfactionTrend,
     isLoading: isLoadingSatisfactionTrend,
     error: satisfactionTrendError,
-  } = useGetSatisfactionTrend({ days: 30 });
+  } = useGetSatisfactionTrend();
 
   const isLoading = isLoadingAnalytics || isLoadingUserMetrics || isLoadingFeedbackMetrics || isLoadingSatisfactionTrend;
   const error = analyticsError || userMetricsError || feedbackMetricsError || satisfactionTrendError;

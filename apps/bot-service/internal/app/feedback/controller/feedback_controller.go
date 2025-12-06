@@ -58,12 +58,7 @@ func (c *FeedbackController) getMetrics(ctx *fiber.Ctx) error {
 }
 
 func (c *FeedbackController) getSatisfactionTrend(ctx *fiber.Ctx) error {
-	var query dto.GetSatisfactionTrendQuery
-	if err := ctx.QueryParser(&query); err != nil {
-		return err
-	}
-
-	res, err := c.feedbackSvc.GetSatisfactionTrend(ctx.Context(), &query)
+	res, err := c.feedbackSvc.GetSatisfactionTrend(ctx.Context())
 	if err != nil {
 		return err
 	}

@@ -70,10 +70,6 @@ type SatisfactionTrendData struct {
 	AvgSatisfaction float64 `json:"avgSatisfaction"`
 }
 
-type GetSatisfactionTrendQuery struct {
-	Days int `query:"days" validate:"omitempty,min=1,max=365"`
-}
-
 type GetSatisfactionTrendResponse struct {
 	Trend []SatisfactionTrendData `json:"trend"`
 }
