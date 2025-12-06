@@ -1,4 +1,8 @@
 import { mockDataStore } from "@/shared/lib/mock-data";
+import {
+  useGetFeedbackMetrics,
+  useGetSatisfactionTrend,
+} from "@/shared/repositories/feedback/query";
 import { useGetUserMetrics } from "@/shared/repositories/user/query";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -32,13 +36,34 @@ export function AnalyticsDashboard() {
 
   const {
     data: userMetrics,
-    isLoading: isLoadingMetrics,
-    error: metricsError,
+    isLoading: isLoadingUserMetrics,
+    error: userMetricsError,
   } = useGetUserMetrics();
 
-  const isLoading = isLoadingAnalytics || isLoadingMetrics;
-  const error = analyticsError || metricsError;
-  const dataExists = !!analytics && !!userMetrics;
+  const {
+    data: feedbackMetrics,
+    isLoading: isLoadingFeedbackMetrics,
+    error: feedbackMetricsError,
+  } = useGetFeedbackMetrics();
+
+  const {
+    data: satisfactionTrend,
+    isLoading: isLoadingSatisfactionTrend,
+    error: satisfactionTrendError,
+  } = useGetSatisfactionTrend();
+
+  const isLoading =
+    isLoadingAnalytics ||
+    isLoadingUserMetrics ||
+    isLoadingFeedbackMetrics ||
+    isLoadingSatisfactionTrend;
+  const error =
+    analyticsError ||
+    userMetricsError ||
+    feedbackMetricsError ||
+    satisfactionTrendError;
+  const dataExists =
+    !!analytics && !!userMetrics && !!feedbackMetrics && !!satisfactionTrend;
 
   if (isLoading) {
     return <Loading />;
@@ -92,7 +117,7 @@ export function AnalyticsDashboard() {
         <MetricCard
           icon={TrendingUp}
           title="Satisfaction Score"
-          value={`${metrics.satisfactionScore}%`}
+          value={`${feedbackMetrics.payload.satisfactionScore.toFixed(1)}%`}
         />
         <MetricCard
           icon={Users}
@@ -106,7 +131,7 @@ export function AnalyticsDashboard() {
           <TopicsChart data={analytics.topTopics} />
         </div>
         <div className="lg:col-span-2">
-          <SatisfactionLineChart data={analytics.satisfactionTrend} />
+          <SatisfactionLineChart data={satisfactionTrend.payload.trend} />
         </div>
       </div>
     </div>

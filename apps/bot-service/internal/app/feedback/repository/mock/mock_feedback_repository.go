@@ -71,6 +71,36 @@ func (mr *MockFeedbackRepositoryMockRecorder) FindByID(ctx, id any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockFeedbackRepository)(nil).FindByID), ctx, id)
 }
 
+// GetMetrics mocks base method.
+func (m *MockFeedbackRepository) GetMetrics(ctx context.Context) (float64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMetrics", ctx)
+	ret0, _ := ret[0].(float64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMetrics indicates an expected call of GetMetrics.
+func (mr *MockFeedbackRepositoryMockRecorder) GetMetrics(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetrics", reflect.TypeOf((*MockFeedbackRepository)(nil).GetMetrics), ctx)
+}
+
+// GetSatisfactionTrend mocks base method.
+func (m *MockFeedbackRepository) GetSatisfactionTrend(ctx context.Context) ([]entity.SatisfactionTrendRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSatisfactionTrend", ctx)
+	ret0, _ := ret[0].([]entity.SatisfactionTrendRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSatisfactionTrend indicates an expected call of GetSatisfactionTrend.
+func (mr *MockFeedbackRepositoryMockRecorder) GetSatisfactionTrend(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSatisfactionTrend", reflect.TypeOf((*MockFeedbackRepository)(nil).GetSatisfactionTrend), ctx)
+}
+
 // List mocks base method.
 func (m *MockFeedbackRepository) List(ctx context.Context, filter *entity.GetFeedbacksFilter) ([]entity.Feedback, int64, error) {
 	m.ctrl.T.Helper()

@@ -156,3 +156,53 @@ func (r *feedbackRepository) List(ctx context.Context, filter *entity.GetFeedbac
 
 	return feedbacks, total, nil
 }
+
+func (r *feedbackRepository) GetMetrics(ctx context.Context) (float64, error) {
+	query := `
+		SELECT
+			COALESCE(
+				(SUM(rating) * 100.0) / NULLIF(COUNT(*) * 5, 0),
+				0
+			) AS satisfaction_score
+		FROM feedbacks
+	`
+
+	var satisfactionScore float64
+	err := r.db.GetContext(ctx, &satisfactionScore, query)
+	if err != nil {
+		return 0, errx.ErrInternalServer.WithLocation("feedbackRepository.GetMetrics").WithError(err)
+	}
+
+	return satisfactionScore, nil
+}
+
+func (r *feedbackRepository) GetSatisfactionTrend(ctx context.Context) ([]entity.SatisfactionTrendRow, error) {
+	query := `
+		WITH date_series AS (
+			SELECT generate_series(
+				CURRENT_DATE - 30 * INTERVAL '1 day',
+				CURRENT_DATE,
+				INTERVAL '1 day'
+			)::date AS date
+		)
+		SELECT
+			ds.date,
+			COALESCE(AVG(f.rating), 0) AS avg_satisfaction
+		FROM date_series ds
+		LEFT JOIN feedbacks f ON DATE(f.created_at) = ds.date
+		GROUP BY ds.date
+		ORDER BY ds.date ASC
+	`
+
+	var results []entity.SatisfactionTrendRow
+	err := r.db.SelectContext(ctx, &results, query)
+	if err != nil {
+		return nil, errx.ErrInternalServer.WithLocation("feedbackRepository.GetSatisfactionTrend").WithError(err)
+	}
+
+	if results == nil {
+		results = []entity.SatisfactionTrendRow{}
+	}
+
+	return results, nil
+}

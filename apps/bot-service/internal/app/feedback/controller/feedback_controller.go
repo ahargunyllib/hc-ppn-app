@@ -47,3 +47,21 @@ func (c *FeedbackController) list(ctx *fiber.Ctx) error {
 
 	return response.SendResponse(ctx, fiber.StatusOK, res)
 }
+
+func (c *FeedbackController) getMetrics(ctx *fiber.Ctx) error {
+	res, err := c.feedbackSvc.GetMetrics(ctx.Context())
+	if err != nil {
+		return err
+	}
+
+	return response.SendResponse(ctx, fiber.StatusOK, res)
+}
+
+func (c *FeedbackController) getSatisfactionTrend(ctx *fiber.Ctx) error {
+	res, err := c.feedbackSvc.GetSatisfactionTrend(ctx.Context())
+	if err != nil {
+		return err
+	}
+
+	return response.SendResponse(ctx, fiber.StatusOK, res)
+}

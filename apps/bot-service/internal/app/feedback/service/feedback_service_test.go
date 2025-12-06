@@ -537,3 +537,135 @@ func TestFeedbackService_List(t *testing.T) {
 		})
 	}
 }
+
+func TestFeedbackService_GetMetrics(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockFeedbackRepo := feedbackRepoMock.NewMockFeedbackRepository(ctrl)
+	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
+	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+
+	service := NewFeedbackService(mockFeedbackRepo, mockValidator, mockUUID)
+	ctx := context.Background()
+
+	tests := []struct {
+		name               string
+		setup              func()
+		wantErr            bool
+		wantSatisfaction   float64
+	}{
+		{
+			name: "success with satisfaction score",
+			setup: func() {
+				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(85.5, nil)
+			},
+			wantErr:            false,
+			wantSatisfaction:   85.5,
+		},
+		{
+			name: "success with zero satisfaction score",
+			setup: func() {
+				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(0.0, nil)
+			},
+			wantErr:            false,
+			wantSatisfaction:   0.0,
+		},
+		{
+			name: "repository error",
+			setup: func() {
+				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(0.0, errx.ErrInternalServer)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			result, err := service.GetMetrics(ctx)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, tt.wantSatisfaction, result.SatisfactionScore)
+			}
+		})
+	}
+}
+
+func TestFeedbackService_GetSatisfactionTrend(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockFeedbackRepo := feedbackRepoMock.NewMockFeedbackRepository(ctrl)
+	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
+	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+
+	service := NewFeedbackService(mockFeedbackRepo, mockValidator, mockUUID)
+	ctx := context.Background()
+
+	testDate := time.Date(2025, 12, 6, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name       string
+		setup      func()
+		wantErr    bool
+		wantCount  int
+		checkFirst func(*testing.T, *dto.GetSatisfactionTrendResponse)
+	}{
+		{
+			name: "success with trend data",
+			setup: func() {
+				mockFeedbackRepo.EXPECT().GetSatisfactionTrend(ctx).Return([]entity.SatisfactionTrendRow{
+					{Date: testDate, AvgSatisfaction: 4.5},
+					{Date: testDate.AddDate(0, 0, 1), AvgSatisfaction: 4.2},
+					{Date: testDate.AddDate(0, 0, 2), AvgSatisfaction: 4.8},
+				}, nil)
+			},
+			wantErr:   false,
+			wantCount: 3,
+			checkFirst: func(t *testing.T, res *dto.GetSatisfactionTrendResponse) {
+				assert.Equal(t, testDate.Format(time.RFC3339), res.Trend[0].Date)
+				assert.Equal(t, 4.5, res.Trend[0].AvgSatisfaction)
+			},
+		},
+		{
+			name: "success with empty trend data",
+			setup: func() {
+				mockFeedbackRepo.EXPECT().GetSatisfactionTrend(ctx).Return([]entity.SatisfactionTrendRow{}, nil)
+			},
+			wantErr:   false,
+			wantCount: 0,
+		},
+		{
+			name: "repository error",
+			setup: func() {
+				mockFeedbackRepo.EXPECT().GetSatisfactionTrend(ctx).Return(nil, errx.ErrInternalServer)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			result, err := service.GetSatisfactionTrend(ctx)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Len(t, result.Trend, tt.wantCount)
+				if tt.checkFirst != nil && tt.wantCount > 0 {
+					tt.checkFirst(t, result)
+				}
+			}
+		})
+	}
+}
