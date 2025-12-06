@@ -83,3 +83,7 @@ type GetUserByPhoneNumberParam struct {
 type GetUserByPhoneNumberResponse struct {
 	User UserResponse `json:"user"`
 }
+
+type GetAllPhoneNumbersResponse struct {
+	PhoneNumbers []string `json:"phoneNumbers"`
+}

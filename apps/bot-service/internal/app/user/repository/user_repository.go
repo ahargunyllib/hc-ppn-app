@@ -216,3 +216,23 @@ func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 	return nil
 }
+
+func (r *userRepository) GetAllPhoneNumbers(ctx context.Context) ([]string, error) {
+	query := `
+		SELECT phone_number
+		FROM users
+		ORDER BY created_at DESC
+	`
+
+	var phoneNumbers []string
+	err := r.db.SelectContext(ctx, &phoneNumbers, query)
+	if err != nil {
+		return nil, errx.ErrInternalServer.WithLocation("userRepository.GetAllPhoneNumbers").WithError(err)
+	}
+
+	if phoneNumbers == nil {
+		phoneNumbers = []string{}
+	}
+
+	return phoneNumbers, nil
+}

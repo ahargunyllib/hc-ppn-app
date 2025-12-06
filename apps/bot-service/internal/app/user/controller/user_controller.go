@@ -78,3 +78,12 @@ func (c *UserController) delete(ctx *fiber.Ctx) error {
 
 	return response.SendResponse(ctx, fiber.StatusNoContent, nil)
 }
+
+func (c *UserController) getAllPhoneNumbers(ctx *fiber.Ctx) error {
+	res, err := c.userSvc.GetAllPhoneNumbers(ctx.Context())
+	if err != nil {
+		return err
+	}
+
+	return response.SendResponse(ctx, fiber.StatusOK, res)
+}
