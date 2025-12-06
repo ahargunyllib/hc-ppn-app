@@ -63,15 +63,15 @@ export function PhoneNumbersManagement() {
       </CardHeader>
       <CardContent>
         <PhoneNumbersTable
-          data={data?.pages.flatMap((p) => p.payload.users) || []}
+          data={data?.payload.users || []}
         />
         <DataPagination
           currentLimit={limit}
           currentPage={page}
           setLimit={setLimit}
           setPage={setPage}
-          totalData={data?.pages[0].payload.meta.pagination.total_data || 0}
-          totalPage={data?.pages[0].payload.meta.pagination.total_page || 1}
+          totalData={data?.payload.meta.pagination.total_data || 0}
+          totalPage={data?.payload.meta.pagination.total_page || 1}
         />
       </CardContent>
     </Card>

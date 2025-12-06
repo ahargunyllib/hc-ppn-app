@@ -24,9 +24,6 @@ export function FeedbackDashboard() {
     data,
     isLoading,
     error,
-    // fetchNextPage,
-    // hasNextPage,
-    // isFetchingNextPage,
   } = useGetFeedbacks({ page, limit });
 
   if (isLoading) {
@@ -66,15 +63,15 @@ export function FeedbackDashboard() {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <FeedbackTable
-          data={data?.pages.flatMap((p) => p.payload.feedbacks) || []}
+          data={data?.payload.feedbacks || []}
         />
         <DataPagination
           currentLimit={limit}
           currentPage={page}
           setLimit={setLimit}
           setPage={setPage}
-          totalData={data?.pages[0].payload.meta.pagination.total_data || 0}
-          totalPage={data?.pages[0].payload.meta.pagination.total_page || 1}
+          totalData={data?.payload.meta.pagination.total_data || 0}
+          totalPage={data?.payload.meta.pagination.total_page || 1}
         />
       </CardContent>
     </Card>
