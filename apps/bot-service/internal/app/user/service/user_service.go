@@ -197,3 +197,16 @@ func (s *UserService) GetAllPhoneNumbers(ctx context.Context) (*dto.GetAllPhoneN
 
 	return res, nil
 }
+
+func (s *UserService) GetMetrics(ctx context.Context) (*dto.GetUserMetricsResponse, error) {
+	totalUsers, err := s.userRepo.GetTotalUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &dto.GetUserMetricsResponse{
+		TotalUsers: totalUsers,
+	}
+
+	return res, nil
+}

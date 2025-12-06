@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUser, deleteUser, getUsers } from "./action";
+import { createUser, deleteUser, getUserMetrics, getUsers } from "./action";
 import type { CreateUserRequest, GetUsersQuery } from "./dto";
 
 export const useGetUsers = (query?: GetUsersQuery) =>
@@ -31,3 +31,9 @@ export const useDeleteUser = () => {
     },
   });
 };
+
+export const useGetUserMetrics = () =>
+  useQuery({
+    queryKey: ["userMetrics"],
+    queryFn: () => getUserMetrics(),
+  });

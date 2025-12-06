@@ -236,3 +236,15 @@ func (r *userRepository) GetAllPhoneNumbers(ctx context.Context) ([]string, erro
 
 	return phoneNumbers, nil
 }
+
+func (r *userRepository) GetTotalUsers(ctx context.Context) (int, error) {
+	query := `SELECT COUNT(*) FROM users`
+
+	var total int
+	err := r.db.GetContext(ctx, &total, query)
+	if err != nil {
+		return 0, errx.ErrInternalServer.WithLocation("userRepository.GetTotalUsers").WithError(err)
+	}
+
+	return total, nil
+}

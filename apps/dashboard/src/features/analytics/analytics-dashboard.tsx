@@ -1,4 +1,5 @@
 import { mockDataStore } from "@/shared/lib/mock-data";
+import { useGetUserMetrics } from "@/shared/repositories/user/query";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, MessageSquare, TrendingUp, Users } from "lucide-react";
 import MetricCard from "./components/metric-card";
@@ -11,12 +12,21 @@ import TopicsChart from "./components/topics-chart";
 export function AnalyticsDashboard() {
   const {
     data: analytics,
-    isLoading,
-    error,
+    isLoading: isLoadingAnalytics,
+    error: analyticsError,
   } = useQuery({
     queryKey: ["analytics"],
     queryFn: () => mockDataStore.getAnalytics(),
   });
+
+  const {
+    data: userMetrics,
+    isLoading: isLoadingMetrics,
+    error: metricsError,
+  } = useGetUserMetrics();
+
+  const isLoading = isLoadingAnalytics || isLoadingMetrics;
+  const error = analyticsError || metricsError;
 
   if (isLoading) {
     return <Loading />;
@@ -70,8 +80,8 @@ export function AnalyticsDashboard() {
         />
         <MetricCard
           icon={Users}
-          title="Active Users"
-          value={metrics.activeUsers.toLocaleString()}
+          title="Total Users"
+          value={userMetrics?.data.totalUsers.toLocaleString() ?? "0"}
         />
       </div>
 
