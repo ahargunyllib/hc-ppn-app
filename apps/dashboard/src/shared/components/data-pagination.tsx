@@ -78,7 +78,7 @@ export default function DataPagination({
               <ChevronLeft />
             </Button>
             <Button
-              disabled={currentPage === totalPage}
+              disabled={currentPage === totalPage || totalPage === 0}
               onClick={() => setPage(currentPage + 1)}
               size="icon-sm"
               variant="outline"
@@ -87,7 +87,7 @@ export default function DataPagination({
               <ChevronRight />
             </Button>
             <Button
-              disabled={currentPage === totalPage}
+              disabled={currentPage === totalPage || totalPage === 0}
               onClick={() => setPage(totalPage)}
               size="icon-sm"
               variant="outline"
