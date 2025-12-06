@@ -41,40 +41,90 @@ func (s *WhatsAppBot) sessionExpiryChecker(ctx context.Context) {
 	}
 }
 
-func (s *WhatsAppBot) processExpiredSessions() {
-	s.sessionsMux.Lock()
-	defer s.sessionsMux.Unlock()
+type sessionAction struct {
+	actionType  string // "send_prompt", "auto_submit", "auto_close"
+	phoneNumber string
+	chatJID     types.JID
+	message     string // only for send_prompt
+}
 
+func (s *WhatsAppBot) processExpiredSessions() {
+	// First pass: collect actions while holding lock
+	var actions []sessionAction
+
+	s.sessionsMux.Lock()
 	now := time.Now()
 	for phoneNumber, session := range s.sessions {
 		if session.WaitingForRating || session.WaitingForComment {
 			continue
 		}
 
+		// Check if we need to send feedback prompt
 		if !session.FeedbackPromptSent && now.Sub(session.LastMessageAt) > feedbackPromptDelay {
+			// Update session state while locked
 			session.FeedbackPromptSent = true
 			session.IsAutoPrompt = true
 			promptTime := now
 			session.FeedbackPromptSentAt = &promptTime
-			s.clientLog.Infof("Sending feedback prompt to %s due to inactivity", phoneNumber)
 
+			// Collect action to perform
 			greeting := getTimeBasedGreeting(getJakartaTime())
 			feedbackMessage := greeting + " Bapak/Ibu, untuk meningkatkan kualitas pelayanan kami, mohon dibantu penilaiannya 🙏🏻\n\nApabila berkenan, mohon kesediaan Bapak/Ibu untuk memberikan feedback terhadap kualitas pelayanan kami dengan rating 1-5.\n\nAdapun 3 poin penilaian sebagai berikut:\n1. Kecepatan dalam merespon pertanyaan/keluhan\n2. Kualitas komunikasi dan informasi yang diberikan\n3. Ketepatan dan kegunaan solusi yang diberikan\n\nUntuk memberikan feedback, silakan ketik /selesai\n\n⏱️ *Catatan:* Jika tidak ada respons dalam 5 menit, kami akan mencatat feedback Anda sebagai rating 5 bintang sebagai bentuk kepuasan terhadap layanan kami."
 
-			s.sendMessage(*session.ChatJID, feedbackMessage)
+			actions = append(actions, sessionAction{
+				actionType:  "send_prompt",
+				phoneNumber: phoneNumber,
+				chatJID:     *session.ChatJID,
+				message:     feedbackMessage,
+			})
 		}
 
+		// Check if session expired and needs auto-submit or close
 		if session.FeedbackPromptSent && session.FeedbackPromptSentAt != nil {
 			if now.Sub(*session.FeedbackPromptSentAt) > sessionExpiryDuration {
 				if session.IsAutoPrompt {
-					s.clientLog.Infof("Auto-submitting feedback rating 5 for %s due to no response", phoneNumber)
-					s.autoSubmitFeedback(phoneNumber, *session.ChatJID)
+					actions = append(actions, sessionAction{
+						actionType:  "auto_submit",
+						phoneNumber: phoneNumber,
+						chatJID:     *session.ChatJID,
+					})
 				} else {
-					s.clientLog.Infof("Auto-closing session for %s due to no feedback response", phoneNumber)
+					actions = append(actions, sessionAction{
+						actionType:  "auto_close",
+						phoneNumber: phoneNumber,
+					})
 				}
-				delete(s.sessions, phoneNumber)
 			}
 		}
+	}
+	s.sessionsMux.Unlock()
+
+	// Execute actions without holding lock
+	var sessionsToDelete []string
+	for _, action := range actions {
+		switch action.actionType {
+		case "send_prompt":
+			s.clientLog.Infof("Sending feedback prompt to %s due to inactivity", action.phoneNumber)
+			s.sendMessage(action.chatJID, action.message)
+
+		case "auto_submit":
+			s.clientLog.Infof("Auto-submitting feedback rating 5 for %s due to no response", action.phoneNumber)
+			s.autoSubmitFeedback(action.phoneNumber, action.chatJID)
+			sessionsToDelete = append(sessionsToDelete, action.phoneNumber)
+
+		case "auto_close":
+			s.clientLog.Infof("Auto-closing session for %s due to no feedback response", action.phoneNumber)
+			sessionsToDelete = append(sessionsToDelete, action.phoneNumber)
+		}
+	}
+
+	// Delete sessions while holding lock
+	if len(sessionsToDelete) > 0 {
+		s.sessionsMux.Lock()
+		for _, phoneNumber := range sessionsToDelete {
+			delete(s.sessions, phoneNumber)
+		}
+		s.sessionsMux.Unlock()
 	}
 }
 
