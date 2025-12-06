@@ -87,3 +87,12 @@ func (c *UserController) getAllPhoneNumbers(ctx *fiber.Ctx) error {
 
 	return response.SendResponse(ctx, fiber.StatusOK, res)
 }
+
+func (c *UserController) getMetrics(ctx *fiber.Ctx) error {
+	res, err := c.userSvc.GetMetrics(ctx.Context())
+	if err != nil {
+		return err
+	}
+
+	return response.SendResponse(ctx, fiber.StatusOK, res)
+}

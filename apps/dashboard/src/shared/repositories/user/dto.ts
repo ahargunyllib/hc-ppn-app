@@ -61,3 +61,7 @@ export type CreateUserRequest = z.infer<typeof CreateUserSchema>;
 export type CreateUserResponse = APIResponse<{
   id: string;
 }>;
+
+export type GetUserMetricsResponse = APIResponse<{
+  totalUsers: number;
+}>;

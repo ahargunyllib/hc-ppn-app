@@ -115,6 +115,21 @@ func (mr *MockUserRepositoryMockRecorder) GetAllPhoneNumbers(ctx any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPhoneNumbers", reflect.TypeOf((*MockUserRepository)(nil).GetAllPhoneNumbers), ctx)
 }
 
+// GetTotalUsers mocks base method.
+func (m *MockUserRepository) GetTotalUsers(ctx context.Context) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalUsers", ctx)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalUsers indicates an expected call of GetTotalUsers.
+func (mr *MockUserRepositoryMockRecorder) GetTotalUsers(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalUsers", reflect.TypeOf((*MockUserRepository)(nil).GetTotalUsers), ctx)
+}
+
 // List mocks base method.
 func (m *MockUserRepository) List(ctx context.Context, filter *entity.GetUsersFilter) ([]entity.User, int64, error) {
 	m.ctrl.T.Helper()

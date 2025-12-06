@@ -87,3 +87,7 @@ type GetUserByPhoneNumberResponse struct {
 type GetAllPhoneNumbersResponse struct {
 	PhoneNumbers []string `json:"phoneNumbers"`
 }
+
+type GetUserMetricsResponse struct {
+	TotalUsers int `json:"totalUsers"`
+}

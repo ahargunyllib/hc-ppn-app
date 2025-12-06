@@ -18,6 +18,7 @@ type UserRepository interface {
 	Update(ctx context.Context, user *entity.User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetAllPhoneNumbers(ctx context.Context) ([]string, error)
+	GetTotalUsers(ctx context.Context) (int, error)
 }
 
 type UserService interface {
@@ -28,4 +29,5 @@ type UserService interface {
 	Update(ctx context.Context, param *dto.UpdateUserParam, req *dto.UpdateUserRequest) error
 	Delete(ctx context.Context, param *dto.DeleteUserParam) error
 	GetAllPhoneNumbers(ctx context.Context) (*dto.GetAllPhoneNumbersResponse, error)
+	GetMetrics(ctx context.Context) (*dto.GetUserMetricsResponse, error)
 }

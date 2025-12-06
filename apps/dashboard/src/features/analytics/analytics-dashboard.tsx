@@ -1,6 +1,18 @@
 import { mockDataStore } from "@/shared/lib/mock-data";
+import { useGetUserMetrics } from "@/shared/repositories/user/query";
 import { useQuery } from "@tanstack/react-query";
-import { Clock, MessageSquare, TrendingUp, Users } from "lucide-react";
+import {
+  CircleAlertIcon,
+  Clock,
+  MessageSquare,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "../../shared/components/ui/alert";
 import MetricCard from "./components/metric-card";
 import MetricCardSkeleton from "./components/metric-card-skeleton";
 import { SatisfactionLineChart } from "./components/satisfaction-line-chart";
@@ -11,12 +23,22 @@ import TopicsChart from "./components/topics-chart";
 export function AnalyticsDashboard() {
   const {
     data: analytics,
-    isLoading,
-    error,
+    isLoading: isLoadingAnalytics,
+    error: analyticsError,
   } = useQuery({
     queryKey: ["analytics"],
     queryFn: () => mockDataStore.getAnalytics(),
   });
+
+  const {
+    data: userMetrics,
+    isLoading: isLoadingMetrics,
+    error: metricsError,
+  } = useGetUserMetrics();
+
+  const isLoading = isLoadingAnalytics || isLoadingMetrics;
+  const error = analyticsError || metricsError;
+  const dataExists = !!analytics && !!userMetrics;
 
   if (isLoading) {
     return <Loading />;
@@ -24,19 +46,23 @@ export function AnalyticsDashboard() {
 
   if (error) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive">Error loading analytics</p>
-          <p className="mt-2 text-muted-foreground text-sm">
-            {error instanceof Error ? error.message : "Unknown error"}
-          </p>
-        </div>
-      </div>
+      <Alert variant="error">
+        <CircleAlertIcon />
+        <AlertTitle>Error loading analytics dashboard</AlertTitle>
+        <AlertDescription>{error.message || "Unknown error"}</AlertDescription>
+      </Alert>
     );
   }
 
-  if (!analytics) {
-    return null;
+  if (!dataExists) {
+    return (
+      <Alert variant="warning">
+        <AlertTitle>No data available</AlertTitle>
+        <AlertDescription>
+          There is no analytics data to display at the moment.
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   const { metrics } = analytics;
@@ -70,8 +96,8 @@ export function AnalyticsDashboard() {
         />
         <MetricCard
           icon={Users}
-          title="Active Users"
-          value={metrics.activeUsers.toLocaleString()}
+          title="Total Users"
+          value={userMetrics.payload.totalUsers.toLocaleString()}
         />
       </div>
 
