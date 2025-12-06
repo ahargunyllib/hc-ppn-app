@@ -68,7 +68,7 @@ func (r *feedbackRepository) FindByID(ctx context.Context, id uuid.UUID) (*entit
 			users.updated_at AS "user.updated_at"
 		FROM feedbacks
 		LEFT JOIN users ON feedbacks.user_id = users.id
-		WHERE id = $1
+		WHERE feedbacks.id = $1
 	`
 
 	var feedback entity.Feedback
