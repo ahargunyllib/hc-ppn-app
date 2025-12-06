@@ -20,11 +20,7 @@ export function FeedbackDashboard() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  const {
-    data,
-    isLoading,
-    error,
-  } = useGetFeedbacks({ page, limit });
+  const { data, isLoading, error } = useGetFeedbacks({ page, limit });
 
   if (isLoading) {
     return (
@@ -62,9 +58,7 @@ export function FeedbackDashboard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <FeedbackTable
-          data={data?.payload.feedbacks || []}
-        />
+        <FeedbackTable data={data?.payload.feedbacks || []} />
         <DataPagination
           currentLimit={limit}
           currentPage={page}

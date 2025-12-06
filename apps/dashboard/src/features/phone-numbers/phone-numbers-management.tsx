@@ -62,9 +62,7 @@ export function PhoneNumbersManagement() {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <PhoneNumbersTable
-          data={data?.payload.users || []}
-        />
+        <PhoneNumbersTable data={data?.payload.users || []} />
         <DataPagination
           currentLimit={limit}
           currentPage={page}
