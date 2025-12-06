@@ -890,3 +890,75 @@ func TestUserService_GetAllPhoneNumbers(t *testing.T) {
 		})
 	}
 }
+
+func TestUserService_GetMetrics(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
+	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
+	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	ctx := context.Background()
+
+	tests := []struct {
+		name           string
+		setup          func()
+		wantErr        bool
+		wantTotalUsers int
+		errType        error
+	}{
+		{
+			name: "success with users",
+			setup: func() {
+				mockUserRepo.EXPECT().GetTotalUsers(ctx).Return(42, nil)
+			},
+			wantErr:        false,
+			wantTotalUsers: 42,
+		},
+		{
+			name: "success with zero users",
+			setup: func() {
+				mockUserRepo.EXPECT().GetTotalUsers(ctx).Return(0, nil)
+			},
+			wantErr:        false,
+			wantTotalUsers: 0,
+		},
+		{
+			name: "success with large number of users",
+			setup: func() {
+				mockUserRepo.EXPECT().GetTotalUsers(ctx).Return(10000, nil)
+			},
+			wantErr:        false,
+			wantTotalUsers: 10000,
+		},
+		{
+			name: "repository error",
+			setup: func() {
+				mockUserRepo.EXPECT().GetTotalUsers(ctx).Return(0, errx.ErrInternalServer)
+			},
+			wantErr: true,
+			errType: errx.ErrInternalServer,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			result, err := service.GetMetrics(ctx)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errType != nil {
+					assert.ErrorIs(t, err, tt.errType)
+				}
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, tt.wantTotalUsers, result.TotalUsers)
+			}
+		})
+	}
+}
