@@ -17,6 +17,7 @@ func InitUserController(router fiber.Router, userSvc *service.UserService, middl
 
 	userRouter := router.Group("/users")
 
+	// TODO: Add middleware for authentication and authorization
 	userRouter.Post("/", controller.create)
 	userRouter.Get("/", controller.list)
 	userRouter.Patch("/:id", controller.update)

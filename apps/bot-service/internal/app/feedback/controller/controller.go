@@ -17,6 +17,7 @@ func InitFeedbackController(router fiber.Router, feedbackSvc *service.FeedbackSe
 
 	feedbackRouter := router.Group("/feedbacks")
 
+	// TODO: Add middleware for authentication and authorization
 	feedbackRouter.Post("/", controller.create)
 	feedbackRouter.Get("/", controller.list)
 	feedbackRouter.Get("/:id", controller.getByID)
