@@ -129,9 +129,11 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		"difyResp": difyResp,
 	}, "[WhatsAppBot] Received response from Dify AI")
 
-	if difyResp.ConversationID != "" && session.ConversationID == "" {
+	if difyResp.ConversationID != "" {
 		s.sessionsMux.Lock()
-		session.ConversationID = difyResp.ConversationID
+		if session.ConversationID == "" {
+			session.ConversationID = difyResp.ConversationID
+		}
 		s.sessionsMux.Unlock()
 	}
 
