@@ -15,6 +15,10 @@ type FeedbackResponse struct {
 }
 
 func ToFeedbackResponse(feedback *entity.Feedback) FeedbackResponse {
+	if feedback == nil {
+		return FeedbackResponse{}
+	}
+	
 	return FeedbackResponse{
 		ID:        feedback.ID.String(),
 		User:      ToUserResponse(&feedback.User),
