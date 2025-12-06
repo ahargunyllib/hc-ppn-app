@@ -184,3 +184,16 @@ func (s *UserService) Delete(ctx context.Context, param *dto.DeleteUserParam) er
 
 	return nil
 }
+
+func (s *UserService) GetAllPhoneNumbers(ctx context.Context) (*dto.GetAllPhoneNumbersResponse, error) {
+	phoneNumbers, err := s.userRepo.GetAllPhoneNumbers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &dto.GetAllPhoneNumbersResponse{
+		PhoneNumbers: phoneNumbers,
+	}
+
+	return res, nil
+}

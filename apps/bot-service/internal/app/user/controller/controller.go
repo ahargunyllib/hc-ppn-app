@@ -20,6 +20,7 @@ func InitUserController(router fiber.Router, userSvc *service.UserService, middl
 	// TODO: Add middleware for authentication and authorization
 	userRouter.Post("/", controller.create)
 	userRouter.Get("/", controller.list)
+	userRouter.Get("/phone-numbers", controller.getAllPhoneNumbers)
 	userRouter.Patch("/:id", controller.update)
 	userRouter.Delete("/:id", controller.delete)
 	userRouter.Get("/:id", controller.getByID)
