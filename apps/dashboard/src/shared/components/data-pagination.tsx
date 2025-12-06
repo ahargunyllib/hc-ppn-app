@@ -56,7 +56,7 @@ export default function DataPagination({
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center justify-center font-medium text-sm">
-            Page {currentPage} of {totalPage}
+            Page {currentPage} of {Math.max(totalPage, 1)}
           </div>
           <div className="flex items-center space-x-2">
             <Button
