@@ -15,6 +15,7 @@ type FeedbackRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Feedback, error)
 	List(ctx context.Context, filter *entity.GetFeedbacksFilter) ([]entity.Feedback, int64, error)
 	GetMetrics(ctx context.Context) (float64, error)
+	GetSatisfactionTrend(ctx context.Context, days int) ([]map[string]any, error)
 }
 
 type FeedbackService interface {
@@ -22,4 +23,5 @@ type FeedbackService interface {
 	GetByID(ctx context.Context, param *dto.GetFeedbackByIDParam) (*dto.GetFeedbackByIDResponse, error)
 	List(ctx context.Context, query *dto.GetFeedbacksQuery) (*dto.GetFeedbacksResponse, error)
 	GetMetrics(ctx context.Context) (*dto.GetFeedbackMetricsResponse, error)
+	GetSatisfactionTrend(ctx context.Context, query *dto.GetSatisfactionTrendQuery) (*dto.GetSatisfactionTrendResponse, error)
 }

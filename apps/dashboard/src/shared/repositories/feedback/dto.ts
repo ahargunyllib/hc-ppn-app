@@ -1,6 +1,7 @@
 import type { APIResponse } from "@/shared/types/api";
 import type { Feedback } from "@/shared/types/feedback";
 import type { PaginationResponse } from "@/shared/types/pagination";
+import type { SatisfactionTrendData } from "@/shared/types/dashboard";
 
 export type GetFeedbacksQuery = {
   page?: number;
@@ -19,4 +20,12 @@ export type GetFeedbacksResponse = APIResponse<{
 
 export type GetFeedbackMetricsResponse = APIResponse<{
   satisfactionScore: number;
+}>;
+
+export type GetSatisfactionTrendQuery = {
+  days?: number;
+};
+
+export type GetSatisfactionTrendResponse = APIResponse<{
+  trend: SatisfactionTrendData[];
 }>;

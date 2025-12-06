@@ -175,3 +175,43 @@ func (r *feedbackRepository) GetMetrics(ctx context.Context) (float64, error) {
 
 	return satisfactionScore, nil
 }
+
+func (r *feedbackRepository) GetSatisfactionTrend(ctx context.Context, days int) ([]map[string]any, error) {
+	query := `
+		WITH date_series AS (
+			SELECT generate_series(
+				CURRENT_DATE - $1 * INTERVAL '1 day',
+				CURRENT_DATE,
+				INTERVAL '1 day'
+			)::date AS date
+		)
+		SELECT
+			ds.date,
+			COALESCE(AVG(f.rating), 0) AS avg_satisfaction
+		FROM date_series ds
+		LEFT JOIN feedbacks f ON DATE(f.created_at) = ds.date
+		GROUP BY ds.date
+		ORDER BY ds.date ASC
+	`
+
+	var results []map[string]any
+	rows, err := r.db.QueryxContext(ctx, query, days)
+	if err != nil {
+		return nil, errx.ErrInternalServer.WithLocation("feedbackRepository.GetSatisfactionTrend").WithError(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		result := make(map[string]any)
+		if err := rows.MapScan(result); err != nil {
+			return nil, errx.ErrInternalServer.WithLocation("feedbackRepository.GetSatisfactionTrend.Scan").WithError(err)
+		}
+		results = append(results, result)
+	}
+
+	if results == nil {
+		results = []map[string]any{}
+	}
+
+	return results, nil
+}

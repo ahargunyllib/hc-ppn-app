@@ -132,3 +132,43 @@ func (s *FeedbackService) GetMetrics(ctx context.Context) (*dto.GetFeedbackMetri
 
 	return res, nil
 }
+
+func (s *FeedbackService) GetSatisfactionTrend(ctx context.Context, query *dto.GetSatisfactionTrendQuery) (*dto.GetSatisfactionTrendResponse, error) {
+	if err := s.validator.Validate(query); err != nil {
+		return nil, err
+	}
+
+	days := 30
+	if query.Days > 0 {
+		days = query.Days
+	}
+
+	results, err := s.feedbackRepo.GetSatisfactionTrend(ctx, days)
+	if err != nil {
+		return nil, err
+	}
+
+	trend := make([]dto.SatisfactionTrendData, 0, len(results))
+	for _, result := range results {
+		date, ok := result["date"].(time.Time)
+		if !ok {
+			continue
+		}
+
+		avgSatisfaction := 0.0
+		if val, ok := result["avg_satisfaction"].(float64); ok {
+			avgSatisfaction = val
+		}
+
+		trend = append(trend, dto.SatisfactionTrendData{
+			Date:            date.Format(time.RFC3339),
+			AvgSatisfaction: avgSatisfaction,
+		})
+	}
+
+	res := &dto.GetSatisfactionTrendResponse{
+		Trend: trend,
+	}
+
+	return res, nil
+}

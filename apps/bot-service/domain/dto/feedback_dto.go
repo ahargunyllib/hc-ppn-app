@@ -64,3 +64,16 @@ type GetFeedbackByIDResponse struct {
 type GetFeedbackMetricsResponse struct {
 	SatisfactionScore float64 `json:"satisfactionScore"`
 }
+
+type SatisfactionTrendData struct {
+	Date            string  `json:"date"`
+	AvgSatisfaction float64 `json:"avgSatisfaction"`
+}
+
+type GetSatisfactionTrendQuery struct {
+	Days int `query:"days" validate:"omitempty,min=1,max=365"`
+}
+
+type GetSatisfactionTrendResponse struct {
+	Trend []SatisfactionTrendData `json:"trend"`
+}

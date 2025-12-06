@@ -1,5 +1,5 @@
 import { mockDataStore } from "@/shared/lib/mock-data";
-import { useGetFeedbackMetrics } from "@/shared/repositories/feedback/query";
+import { useGetFeedbackMetrics, useGetSatisfactionTrend } from "@/shared/repositories/feedback/query";
 import { useGetUserMetrics } from "@/shared/repositories/user/query";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -43,9 +43,15 @@ export function AnalyticsDashboard() {
     error: feedbackMetricsError,
   } = useGetFeedbackMetrics();
 
-  const isLoading = isLoadingAnalytics || isLoadingUserMetrics || isLoadingFeedbackMetrics;
-  const error = analyticsError || userMetricsError || feedbackMetricsError;
-  const dataExists = !!analytics && !!userMetrics && !!feedbackMetrics;
+  const {
+    data: satisfactionTrend,
+    isLoading: isLoadingSatisfactionTrend,
+    error: satisfactionTrendError,
+  } = useGetSatisfactionTrend({ days: 30 });
+
+  const isLoading = isLoadingAnalytics || isLoadingUserMetrics || isLoadingFeedbackMetrics || isLoadingSatisfactionTrend;
+  const error = analyticsError || userMetricsError || feedbackMetricsError || satisfactionTrendError;
+  const dataExists = !!analytics && !!userMetrics && !!feedbackMetrics && !!satisfactionTrend;
 
   if (isLoading) {
     return <Loading />;
@@ -74,13 +80,27 @@ export function AnalyticsDashboard() {
 
   const { metrics } = analytics;
 
+  const formatResponseTime = (seconds: number): string => {
+    if (seconds < 60) {
+      return `${seconds}s`;
+    }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           icon={MessageSquare}
           title="Total Interactions"
           value={metrics.totalInteractions.toLocaleString()}
+        />
+        <MetricCard
+          icon={Clock}
+          title="Avg Response Time"
+          value={formatResponseTime(metrics.avgResponseTime)}
         />
         <MetricCard
           icon={TrendingUp}
@@ -99,7 +119,7 @@ export function AnalyticsDashboard() {
           <TopicsChart data={analytics.topTopics} />
         </div>
         <div className="lg:col-span-2">
-          <SatisfactionLineChart data={analytics.satisfactionTrend} />
+          <SatisfactionLineChart data={satisfactionTrend.payload.trend} />
         </div>
       </div>
     </div>
@@ -109,7 +129,8 @@ export function AnalyticsDashboard() {
 function Loading() {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCardSkeleton />
         <MetricCardSkeleton />
         <MetricCardSkeleton />
         <MetricCardSkeleton />
