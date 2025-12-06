@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/infra/env"
 )
@@ -68,7 +69,9 @@ func (o *CustomDifyStruct) ChatMessages(ctx context.Context, req *Request) (*Res
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+o.DifyAPIKey)
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
 	httpResp, err := client.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
