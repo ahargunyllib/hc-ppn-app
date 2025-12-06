@@ -821,3 +821,72 @@ func TestUserService_Delete(t *testing.T) {
 		})
 	}
 }
+
+func TestUserService_GetAllPhoneNumbers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
+	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
+	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	ctx := context.Background()
+
+	testPhoneNumbers := []string{"+1234567890", "+0987654321", "+1122334455"}
+
+	tests := []struct {
+		name      string
+		setup     func()
+		wantErr   bool
+		wantCount int
+		errType   error
+	}{
+		{
+			name: "success with phone numbers",
+			setup: func() {
+				mockUserRepo.EXPECT().GetAllPhoneNumbers(ctx).Return(testPhoneNumbers, nil)
+			},
+			wantErr:   false,
+			wantCount: 3,
+		},
+		{
+			name: "success with empty result",
+			setup: func() {
+				mockUserRepo.EXPECT().GetAllPhoneNumbers(ctx).Return([]string{}, nil)
+			},
+			wantErr:   false,
+			wantCount: 0,
+		},
+		{
+			name: "repository error",
+			setup: func() {
+				mockUserRepo.EXPECT().GetAllPhoneNumbers(ctx).Return(nil, errx.ErrInternalServer)
+			},
+			wantErr: true,
+			errType: errx.ErrInternalServer,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			result, err := service.GetAllPhoneNumbers(ctx)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errType != nil {
+					assert.ErrorIs(t, err, tt.errType)
+				}
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Len(t, result.PhoneNumbers, tt.wantCount)
+				if tt.wantCount > 0 {
+					assert.Equal(t, testPhoneNumbers, result.PhoneNumbers)
+				}
+			}
+		})
+	}
+}
