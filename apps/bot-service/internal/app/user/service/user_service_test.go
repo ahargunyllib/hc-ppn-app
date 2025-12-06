@@ -78,6 +78,21 @@ func TestUserService_Create(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "invalid phone number - not E.164 format",
+			req: &dto.CreateUserRequest{
+				PhoneNumber: "123456",
+				Label:       "Test User",
+			},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
+					"body.phone_number": validator.ValidationError{
+						Message: "phone_number must be in E.164 format",
+					},
+				})
+			},
+			wantErr: true,
+		},
+		{
 			name: "uuid generation error",
 			req: &dto.CreateUserRequest{
 				PhoneNumber: "+1234567890",
@@ -208,6 +223,95 @@ func TestUserService_GetByID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 			result, err := service.GetByID(ctx, tt.param)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errType != nil {
+					assert.ErrorIs(t, err, tt.errType)
+				}
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, testID.String(), result.User.ID)
+				assert.Equal(t, "+1234567890", result.User.PhoneNumber)
+				assert.Equal(t, "Test User", result.User.Label)
+			}
+		})
+	}
+}
+
+func TestUserService_GetByPhoneNumber(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
+	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
+	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	ctx := context.Background()
+
+	testID := uuid.New()
+	testPhoneNumber := "+1234567890"
+	testUser := &entity.User{
+		ID:          testID,
+		PhoneNumber: "+1234567890",
+		Label:       "Test User",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	tests := []struct {
+		name    string
+		param   *dto.GetUserByPhoneNumberParam
+		setup   func()
+		wantErr bool
+		errType error
+	}{
+		{
+			name: "success",
+			param: &dto.GetUserByPhoneNumberParam{
+				PhoneNumber: testPhoneNumber,
+			},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockUserRepo.EXPECT().FindByPhoneNumber(ctx, testPhoneNumber).Return(testUser, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "validation error",
+			param: &dto.GetUserByPhoneNumberParam{
+				PhoneNumber: "invalid",
+			},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
+					"param": validator.ValidationError{
+						Message: "validation error",
+					},
+				})
+			},
+			wantErr: true,
+		},
+		{
+			name: "user not found",
+			param: &dto.GetUserByPhoneNumberParam{
+				PhoneNumber: testPhoneNumber,
+			},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockUserRepo.EXPECT().FindByPhoneNumber(ctx, testPhoneNumber).Return(nil, errx.ErrUserNotFound)
+			},
+			wantErr: true,
+			errType: errx.ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			result, err := service.GetByPhoneNumber(ctx, tt.param)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -540,6 +644,24 @@ func TestUserService_Update(t *testing.T) {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
 					"body": validator.ValidationError{
 						Message: "validation error",
+					},
+				})
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid phone number - not E.164 format",
+			param: &dto.UpdateUserParam{
+				ID: testID.String(),
+			},
+			req: &dto.UpdateUserRequest{
+				PhoneNumber: func() *string { s := "123456"; return &s }(),
+			},
+			setup: func() {
+				mockValidator.EXPECT().Validate(&dto.UpdateUserParam{ID: testID.String()}).Return(nil)
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
+					"body.phone_number": validator.ValidationError{
+						Message: "phone_number must be in E.164 format",
 					},
 				})
 			},

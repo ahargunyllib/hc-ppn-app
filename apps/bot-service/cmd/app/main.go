@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"os"
 	"os/signal"
 	"sync"
@@ -13,6 +12,7 @@ import (
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/infra/server"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/infra/whatsapp"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/log"
+	"github.com/jmoiron/sqlx"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 
 	if env.AppEnv.BotEnabled {
 		wg.Add(1)
-		go startWhatsAppBot(ctx, psqlDB.DB, &wg)
+		go startWhatsAppBot(ctx, psqlDB, &wg)
 	}
 
 	go server.Start(env.AppEnv.AppPort)
@@ -43,10 +43,10 @@ func main() {
 	log.Info(log.CustomLogInfo{}, "Shutdown complete")
 }
 
-func startWhatsAppBot(ctx context.Context, db *sql.DB, wg *sync.WaitGroup) {
+func startWhatsAppBot(ctx context.Context, db *sqlx.DB, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	botService, err := whatsapp.NewWhatsAppBot(ctx, db)
+	botService, err := whatsapp.NewWhatsAppBot(ctx, db.DB, db)
 	if err != nil {
 		log.Error(log.CustomLogInfo{
 			"error": err.Error(),

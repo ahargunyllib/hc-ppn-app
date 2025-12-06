@@ -29,7 +29,7 @@ func ToUserResponse(user *entity.User) UserResponse {
 }
 
 type CreateUserRequest struct {
-	PhoneNumber string  `json:"phoneNumber" validate:"required,min=10,max=20"`
+	PhoneNumber string  `json:"phoneNumber" validate:"e164,required,min=10,max=20"`
 	Label       string  `json:"label" validate:"required,min=1,max=255"`
 	AssignedTo  *string `json:"assignedTo,omitempty" validate:"omitempty,max=255"`
 	Notes       *string `json:"notes,omitempty"`
@@ -44,7 +44,7 @@ type UpdateUserParam struct {
 }
 
 type UpdateUserRequest struct {
-	PhoneNumber *string `json:"phoneNumber,omitempty" validate:"omitempty,min=10,max=20"`
+	PhoneNumber *string `json:"phoneNumber,omitempty" validate:"omitempty,e164,min=10,max=20"`
 	Label       *string `json:"label,omitempty" validate:"omitempty,min=1,max=255"`
 	AssignedTo  *string `json:"assignedTo,omitempty" validate:"omitempty,max=255"`
 	Notes       *string `json:"notes,omitempty"`
@@ -73,5 +73,13 @@ type GetUserByIDParam struct {
 }
 
 type GetUserByIDResponse struct {
+	User UserResponse `json:"user"`
+}
+
+type GetUserByPhoneNumberParam struct {
+	PhoneNumber string `param:"phoneNumber" validate:"required,min=10,max=20"`
+}
+
+type GetUserByPhoneNumberResponse struct {
 	User UserResponse `json:"user"`
 }

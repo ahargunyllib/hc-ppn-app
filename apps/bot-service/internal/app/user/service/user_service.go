@@ -67,6 +67,26 @@ func (s *UserService) GetByID(ctx context.Context, param *dto.GetUserByIDParam) 
 	return res, nil
 }
 
+func (s *UserService) GetByPhoneNumber(ctx context.Context, param *dto.GetUserByPhoneNumberParam) (*dto.GetUserByPhoneNumberResponse, error) {
+	// Validate param
+	if err := s.validator.Validate(param); err != nil {
+		return nil, err
+	}
+
+	user, err := s.userRepo.FindByPhoneNumber(ctx, param.PhoneNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	userRes := dto.ToUserResponse(user)
+
+	res := &dto.GetUserByPhoneNumberResponse{
+		User: userRes,
+	}
+
+	return res, nil
+}
+
 func (s *UserService) List(ctx context.Context, query *dto.GetUsersQuery) (*dto.GetUsersResponse, error) {
 	if err := s.validator.Validate(query); err != nil {
 		return nil, err

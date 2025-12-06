@@ -1,9 +1,9 @@
+import DataPagination from "@/shared/components/data-pagination";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/shared/components/ui/alert";
-import { Button } from "@/shared/components/ui/button";
 import {
   Card,
   CardAction,
@@ -13,16 +13,17 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { CircleAlertIcon, Plus } from "lucide-react";
+import { useGetUsers } from "@/shared/repositories/user/query";
+import { CircleAlertIcon } from "lucide-react";
+import { useState } from "react";
+import CreatePhoneNumberDialog from "./components/create-phone-number-dialog";
 import { PhoneNumbersTable } from "./components/phone-numbers-table";
-import { usePhoneNumbers } from "./hooks/use-phone-numbers";
 
 export function PhoneNumbersManagement() {
-  const { data: phoneNumbers, isLoading, error } = usePhoneNumbers();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const handleAdd = () => {
-    // TODO
-  };
+  const { data, isLoading, error } = useGetUsers({ page, limit });
 
   if (isLoading) {
     return (
@@ -57,14 +58,19 @@ export function PhoneNumbersManagement() {
         <CardTitle>Phone Number Management</CardTitle>
         <CardDescription>Manage user phone numbers.</CardDescription>
         <CardAction>
-          <Button onClick={handleAdd} size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Phone Number
-          </Button>
+          <CreatePhoneNumberDialog />
         </CardAction>
       </CardHeader>
       <CardContent>
-        <PhoneNumbersTable data={phoneNumbers || []} />
+        <PhoneNumbersTable data={data?.payload.users || []} />
+        <DataPagination
+          currentLimit={limit}
+          currentPage={page}
+          setLimit={setLimit}
+          setPage={setPage}
+          totalData={data?.payload.meta.pagination.total_data || 0}
+          totalPage={data?.payload.meta.pagination.total_page || 1}
+        />
       </CardContent>
     </Card>
   );

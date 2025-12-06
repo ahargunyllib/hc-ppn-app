@@ -17,9 +17,10 @@ func InitUserController(router fiber.Router, userSvc *service.UserService, middl
 
 	userRouter := router.Group("/users")
 
-	userRouter.Post("/", middleware.RequireAuth(), controller.create)
-	userRouter.Get("/", middleware.RequireAuth(), controller.list)
-	userRouter.Patch("/:id", middleware.RequireAuth(), controller.update)
-	userRouter.Delete("/:id", middleware.RequireAuth(), controller.delete)
-	userRouter.Get("/:id", middleware.RequireAuth(), controller.getByID)
+	// TODO: Add middleware for authentication and authorization
+	userRouter.Post("/", controller.create)
+	userRouter.Get("/", controller.list)
+	userRouter.Patch("/:id", controller.update)
+	userRouter.Delete("/:id", controller.delete)
+	userRouter.Get("/:id", controller.getByID)
 }
