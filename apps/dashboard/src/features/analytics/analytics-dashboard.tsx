@@ -1,5 +1,8 @@
 import { mockDataStore } from "@/shared/lib/mock-data";
-import { useGetFeedbackMetrics, useGetSatisfactionTrend } from "@/shared/repositories/feedback/query";
+import {
+  useGetFeedbackMetrics,
+  useGetSatisfactionTrend,
+} from "@/shared/repositories/feedback/query";
 import { useGetUserMetrics } from "@/shared/repositories/user/query";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -49,9 +52,18 @@ export function AnalyticsDashboard() {
     error: satisfactionTrendError,
   } = useGetSatisfactionTrend();
 
-  const isLoading = isLoadingAnalytics || isLoadingUserMetrics || isLoadingFeedbackMetrics || isLoadingSatisfactionTrend;
-  const error = analyticsError || userMetricsError || feedbackMetricsError || satisfactionTrendError;
-  const dataExists = !!analytics && !!userMetrics && !!feedbackMetrics && !!satisfactionTrend;
+  const isLoading =
+    isLoadingAnalytics ||
+    isLoadingUserMetrics ||
+    isLoadingFeedbackMetrics ||
+    isLoadingSatisfactionTrend;
+  const error =
+    analyticsError ||
+    userMetricsError ||
+    feedbackMetricsError ||
+    satisfactionTrendError;
+  const dataExists =
+    !!analytics && !!userMetrics && !!feedbackMetrics && !!satisfactionTrend;
 
   if (isLoading) {
     return <Loading />;
