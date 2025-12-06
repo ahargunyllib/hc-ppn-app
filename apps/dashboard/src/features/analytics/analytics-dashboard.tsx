@@ -81,7 +81,7 @@ export function AnalyticsDashboard() {
         <MetricCard
           icon={Users}
           title="Total Users"
-          value={userMetrics?.data.totalUsers.toLocaleString() ?? "0"}
+          value={userMetrics?.payload.totalUsers.toLocaleString() ?? "0"}
         />
       </div>
 
