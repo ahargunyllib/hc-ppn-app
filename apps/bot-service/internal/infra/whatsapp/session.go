@@ -79,8 +79,8 @@ func (s *WhatsAppBot) processExpiredSessions() {
 }
 
 func (s *WhatsAppBot) getSession(phoneNumber string) *Session {
-	s.sessionsMux.Lock()
-	defer s.sessionsMux.Unlock()
+	s.sessionsMux.RLock()
+	defer s.sessionsMux.RUnlock()
 
 	return s.sessions[phoneNumber]
 }
