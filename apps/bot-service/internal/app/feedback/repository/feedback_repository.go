@@ -156,3 +156,22 @@ func (r *feedbackRepository) List(ctx context.Context, filter *entity.GetFeedbac
 
 	return feedbacks, total, nil
 }
+
+func (r *feedbackRepository) GetMetrics(ctx context.Context) (float64, error) {
+	query := `
+		SELECT
+			COALESCE(
+				COUNT(CASE WHEN rating >= 4 THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0),
+				0
+			) AS satisfaction_score
+		FROM feedbacks
+	`
+
+	var satisfactionScore float64
+	err := r.db.GetContext(ctx, &satisfactionScore, query)
+	if err != nil {
+		return 0, errx.ErrInternalServer.WithLocation("feedbackRepository.GetMetrics").WithError(err)
+	}
+
+	return satisfactionScore, nil
+}

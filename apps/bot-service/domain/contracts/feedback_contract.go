@@ -14,10 +14,12 @@ type FeedbackRepository interface {
 	Create(ctx context.Context, feedback *entity.Feedback) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Feedback, error)
 	List(ctx context.Context, filter *entity.GetFeedbacksFilter) ([]entity.Feedback, int64, error)
+	GetMetrics(ctx context.Context) (float64, error)
 }
 
 type FeedbackService interface {
 	Create(ctx context.Context, req *dto.CreateFeedbackRequest) (*dto.CreateFeedbackResponse, error)
 	GetByID(ctx context.Context, param *dto.GetFeedbackByIDParam) (*dto.GetFeedbackByIDResponse, error)
 	List(ctx context.Context, query *dto.GetFeedbacksQuery) (*dto.GetFeedbacksResponse, error)
+	GetMetrics(ctx context.Context) (*dto.GetFeedbackMetricsResponse, error)
 }

@@ -60,3 +60,7 @@ type GetFeedbackByIDParam struct {
 type GetFeedbackByIDResponse struct {
 	Feedback FeedbackResponse `json:"feedback"`
 }
+
+type GetFeedbackMetricsResponse struct {
+	SatisfactionScore float64 `json:"satisfactionScore"`
+}

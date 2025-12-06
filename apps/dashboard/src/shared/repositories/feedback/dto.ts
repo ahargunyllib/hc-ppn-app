@@ -16,3 +16,7 @@ export type GetFeedbacksResponse = APIResponse<{
     pagination: PaginationResponse;
   };
 }>;
+
+export type GetFeedbackMetricsResponse = APIResponse<{
+  satisfactionScore: number;
+}>;

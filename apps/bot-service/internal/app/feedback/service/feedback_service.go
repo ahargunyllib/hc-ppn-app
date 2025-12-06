@@ -119,3 +119,16 @@ func (s *FeedbackService) List(ctx context.Context, query *dto.GetFeedbacksQuery
 
 	return res, nil
 }
+
+func (s *FeedbackService) GetMetrics(ctx context.Context) (*dto.GetFeedbackMetricsResponse, error) {
+	satisfactionScore, err := s.feedbackRepo.GetMetrics(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &dto.GetFeedbackMetricsResponse{
+		SatisfactionScore: satisfactionScore,
+	}
+
+	return res, nil
+}

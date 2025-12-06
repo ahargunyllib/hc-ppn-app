@@ -1,4 +1,5 @@
 import { mockDataStore } from "@/shared/lib/mock-data";
+import { useGetFeedbackMetrics } from "@/shared/repositories/feedback/query";
 import { useGetUserMetrics } from "@/shared/repositories/user/query";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -32,13 +33,19 @@ export function AnalyticsDashboard() {
 
   const {
     data: userMetrics,
-    isLoading: isLoadingMetrics,
-    error: metricsError,
+    isLoading: isLoadingUserMetrics,
+    error: userMetricsError,
   } = useGetUserMetrics();
 
-  const isLoading = isLoadingAnalytics || isLoadingMetrics;
-  const error = analyticsError || metricsError;
-  const dataExists = !!analytics && !!userMetrics;
+  const {
+    data: feedbackMetrics,
+    isLoading: isLoadingFeedbackMetrics,
+    error: feedbackMetricsError,
+  } = useGetFeedbackMetrics();
+
+  const isLoading = isLoadingAnalytics || isLoadingUserMetrics || isLoadingFeedbackMetrics;
+  const error = analyticsError || userMetricsError || feedbackMetricsError;
+  const dataExists = !!analytics && !!userMetrics && !!feedbackMetrics;
 
   if (isLoading) {
     return <Loading />;
@@ -67,32 +74,18 @@ export function AnalyticsDashboard() {
 
   const { metrics } = analytics;
 
-  const formatResponseTime = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${seconds}s`;
-    }
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
-  };
-
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           icon={MessageSquare}
           title="Total Interactions"
           value={metrics.totalInteractions.toLocaleString()}
         />
         <MetricCard
-          icon={Clock}
-          title="Avg Response Time"
-          value={formatResponseTime(metrics.avgResponseTime)}
-        />
-        <MetricCard
           icon={TrendingUp}
           title="Satisfaction Score"
-          value={`${metrics.satisfactionScore}%`}
+          value={`${feedbackMetrics.payload.satisfactionScore.toFixed(1)}%`}
         />
         <MetricCard
           icon={Users}
@@ -116,8 +109,7 @@ export function AnalyticsDashboard() {
 function Loading() {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCardSkeleton />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <MetricCardSkeleton />
         <MetricCardSkeleton />
         <MetricCardSkeleton />
