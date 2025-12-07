@@ -12,11 +12,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/shared/components/ui/chart";
-import type { TopicData } from "@/shared/types/dashboard";
+import type { Topic } from "@/shared/types/topic";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 
 type TopicsChartProps = {
-  data: TopicData[];
+  data: Topic[];
 };
 
 export default function TopicsChart({ data }: TopicsChartProps) {
@@ -32,13 +32,13 @@ export default function TopicsChart({ data }: TopicsChartProps) {
       <CardHeader>
         <CardTitle>Popular Topics</CardTitle>
         <CardDescription>
-          Topics with the highest user interactions over the selected period
+          Top 5 topics with the highest interactions in the last 30 days
         </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <BarChart data={data}>
-            <XAxis className="text-xs" dataKey="topic" />
+            <XAxis className="text-xs" dataKey="title" />
             <YAxis className="text-xs" />
             <ChartTooltip content={<ChartTooltipContent />} />
             <ChartLegend content={<ChartLegendContent />} />
