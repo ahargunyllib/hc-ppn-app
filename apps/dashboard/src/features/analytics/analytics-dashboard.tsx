@@ -1,10 +1,9 @@
-import { mockDataStore } from "@/shared/lib/mock-data";
 import {
   useGetFeedbackMetrics,
   useGetSatisfactionTrend,
 } from "@/shared/repositories/feedback/query";
+import { useGetHotTopics } from "@/shared/repositories/topic/query";
 import { useGetUserMetrics } from "@/shared/repositories/user/query";
-import { useQuery } from "@tanstack/react-query";
 import {
   CircleAlertIcon,
   Clock,
@@ -26,15 +25,6 @@ import TopicsChart from "./components/topics-chart";
 
 export function AnalyticsDashboard() {
   const {
-    data: analytics,
-    isLoading: isLoadingAnalytics,
-    error: analyticsError,
-  } = useQuery({
-    queryKey: ["analytics"],
-    queryFn: () => mockDataStore.getAnalytics(),
-  });
-
-  const {
     data: userMetrics,
     isLoading: isLoadingUserMetrics,
     error: userMetricsError,
@@ -52,18 +42,24 @@ export function AnalyticsDashboard() {
     error: satisfactionTrendError,
   } = useGetSatisfactionTrend();
 
+  const {
+    data: hotTopics,
+    isLoading: isLoadingHotTopics,
+    error: hotTopicsError,
+  } = useGetHotTopics();
+
   const isLoading =
-    isLoadingAnalytics ||
     isLoadingUserMetrics ||
     isLoadingFeedbackMetrics ||
-    isLoadingSatisfactionTrend;
+    isLoadingSatisfactionTrend ||
+    isLoadingHotTopics;
   const error =
-    analyticsError ||
     userMetricsError ||
     feedbackMetricsError ||
-    satisfactionTrendError;
+    satisfactionTrendError ||
+    hotTopicsError;
   const dataExists =
-    !!analytics && !!userMetrics && !!feedbackMetrics && !!satisfactionTrend;
+    !!userMetrics && !!feedbackMetrics && !!satisfactionTrend && !!hotTopics;
 
   if (isLoading) {
     return <Loading />;
@@ -90,30 +86,11 @@ export function AnalyticsDashboard() {
     );
   }
 
-  const { metrics } = analytics;
-
-  const formatResponseTime = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${seconds}s`;
-    }
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
-  };
-
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          icon={MessageSquare}
-          title="Total Interactions"
-          value={metrics.totalInteractions.toLocaleString()}
-        />
-        <MetricCard
-          icon={Clock}
-          title="Avg Response Time"
-          value={formatResponseTime(metrics.avgResponseTime)}
-        />
+        <MetricCard icon={MessageSquare} title="Total Interactions" value={0} />
+        <MetricCard icon={Clock} title="Avg Response Time" value={0} />
         <MetricCard
           icon={TrendingUp}
           title="Satisfaction Score"
@@ -128,7 +105,7 @@ export function AnalyticsDashboard() {
 
       <div className="grid gap-6 lg:grid-cols-4">
         <div className="lg:col-span-2">
-          <TopicsChart data={analytics.topTopics} />
+          <TopicsChart data={hotTopics.payload.topics} />
         </div>
         <div className="lg:col-span-2">
           <SatisfactionLineChart data={satisfactionTrend.payload.trend} />

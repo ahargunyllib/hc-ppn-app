@@ -4,6 +4,9 @@ import (
 	feedbackcontroller "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/controller"
 	feedbackrepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/repository"
 	feedbackservice "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/service"
+	topiccontroller "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/topic/controller"
+	topicrepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/topic/repository"
+	topicservice "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/topic/service"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/controller"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/repository"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/service"
@@ -98,6 +101,10 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	feedbackRepo := feedbackrepository.NewFeedbackRepository(db)
 	feedbackService := feedbackservice.NewFeedbackService(feedbackRepo, validatorService, uuidService)
 	feedbackcontroller.InitFeedbackController(v1, feedbackService, middleware)
+
+	topicRepo := topicrepository.NewTopicRepository(db)
+	topicService := topicservice.NewTopicService(topicRepo, validatorService)
+	topiccontroller.InitTopicController(v1, topicService, middleware)
 
 	s.app.Use(func(c *fiber.Ctx) error {
 		return response.SendResponse(c, fiber.StatusNotFound, "Route not found")

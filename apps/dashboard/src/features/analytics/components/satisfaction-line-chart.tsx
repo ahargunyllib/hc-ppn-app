@@ -12,11 +12,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/shared/components/ui/chart";
-import type { SatisfactionTrendData } from "@/shared/types/dashboard";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 type SatisfactionLineChartProps = {
-  data: SatisfactionTrendData[];
+  data: {
+    date: string;
+    avgSatisfaction: number;
+  }[];
 };
 
 export function SatisfactionLineChart({ data }: SatisfactionLineChartProps) {
