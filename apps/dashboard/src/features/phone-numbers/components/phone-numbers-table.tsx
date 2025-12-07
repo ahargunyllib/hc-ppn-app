@@ -26,12 +26,12 @@ export function PhoneNumbersTable({ data }: PhoneNumbersTableProps) {
       header: "Phone Number",
     },
     {
-      accessorKey: "label",
-      header: "Label",
+      accessorKey: "name",
+      header: "Name",
     },
     {
-      accessorKey: "assignedTo",
-      header: "Assigned To",
+      accessorKey: "jobTitle",
+      header: "Job Title",
       cell: ({ getValue }) => getValue<string>() || "-",
     },
     {

@@ -15,7 +15,6 @@ import {
   FieldLabel,
 } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
-import { Textarea } from "@/shared/components/ui/textarea";
 import { toastManager } from "@/shared/components/ui/toast";
 import { parseAPIError } from "@/shared/lib/api-client";
 import { CreateUserSchema } from "@/shared/repositories/user/dto";
@@ -32,9 +31,10 @@ export default function CreatePhoneNumberDialog() {
   const form = useForm({
     defaultValues: {
       phoneNumber: "",
-      label: "",
-      assignedTo: "",
-      notes: "",
+      name: "",
+      jobTitle: "",
+      gender: "",
+      dateOfBirth: "",
     },
     validators: {
       onSubmit: CreateUserSchema,
@@ -117,7 +117,7 @@ export default function CreatePhoneNumberDialog() {
               )}
             </form.Field>
 
-            <form.Field name="label">
+            <form.Field name="name">
               {(field) => (
                 <Field
                   dirty={field.state.meta.isDirty}
@@ -126,19 +126,19 @@ export default function CreatePhoneNumberDialog() {
                   touched={field.state.meta.isTouched}
                 >
                   <FieldLabel htmlFor={field.name}>
-                    Label
+                    Name
                     <span className="text-red-500">*</span>
                   </FieldLabel>
                   <Input
                     aria-invalid={
                       field.state.meta.isTouched && !field.state.meta.isValid
                     }
-                    autoComplete="off"
+                    autoComplete="name"
                     id={field.name}
                     name={field.name}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Masukkan label"
+                    placeholder="Enter name"
                     type="text"
                     value={field.state.value}
                   />
@@ -149,7 +149,7 @@ export default function CreatePhoneNumberDialog() {
               )}
             </form.Field>
 
-            <form.Field name="assignedTo">
+            <form.Field name="jobTitle">
               {(field) => (
                 <Field
                   dirty={field.state.meta.isDirty}
@@ -157,17 +157,17 @@ export default function CreatePhoneNumberDialog() {
                   name={field.name}
                   touched={field.state.meta.isTouched}
                 >
-                  <FieldLabel htmlFor={field.name}>Assigned To</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>Job Title</FieldLabel>
                   <Input
                     aria-invalid={
                       field.state.meta.isTouched && !field.state.meta.isValid
                     }
-                    autoComplete="off"
+                    autoComplete="organization-title"
                     id={field.name}
                     name={field.name}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Masukkan user ID yang ditugaskan"
+                    placeholder="Enter job title"
                     type="text"
                     value={field.state.value}
                   />
@@ -178,7 +178,7 @@ export default function CreatePhoneNumberDialog() {
               )}
             </form.Field>
 
-            <form.Field name="notes">
+            <form.Field name="gender">
               {(field) => (
                 <Field
                   dirty={field.state.meta.isDirty}
@@ -186,17 +186,47 @@ export default function CreatePhoneNumberDialog() {
                   name={field.name}
                   touched={field.state.meta.isTouched}
                 >
-                  <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
-                  <Textarea
+                  <FieldLabel htmlFor={field.name}>Gender</FieldLabel>
+                  <select
                     aria-invalid={
                       field.state.meta.isTouched && !field.state.meta.isValid
                     }
-                    autoComplete="off"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:font-medium file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     id={field.name}
                     name={field.name}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Masukkan catatan"
+                    value={field.state.value}
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Laki-laki</option>
+                    <option value="female">Perempuan</option>
+                  </select>
+                  <FieldError match={!field.state.meta.isValid}>
+                    {field.state.meta.errors[0]?.message}
+                  </FieldError>
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Field name="dateOfBirth">
+              {(field) => (
+                <Field
+                  dirty={field.state.meta.isDirty}
+                  invalid={!field.state.meta.isValid}
+                  name={field.name}
+                  touched={field.state.meta.isTouched}
+                >
+                  <FieldLabel htmlFor={field.name}>Date of Birth</FieldLabel>
+                  <Input
+                    aria-invalid={
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    }
+                    id={field.name}
+                    name={field.name}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    type="date"
                     value={field.state.value}
                   />
                   <FieldError match={!field.state.meta.isValid}>

@@ -61,9 +61,10 @@ func (r *feedbackRepository) FindByID(ctx context.Context, id uuid.UUID) (*entit
 
 			users.id AS "user.id",
 			users.phone_number AS "user.phone_number",
-			users.label AS "user.label",
-			users.assigned_to AS "user.assigned_to",
-			users.notes AS "user.notes",
+			users.name AS "user.name",
+			users.job_title AS "user.job_title",
+			users.gender AS "user.gender",
+			users.date_of_birth AS "user.date_of_birth",
 			users.created_at AS "user.created_at",
 			users.updated_at AS "user.updated_at"
 		FROM feedbacks
@@ -105,9 +106,10 @@ func (r *feedbackRepository) List(ctx context.Context, filter *entity.GetFeedbac
 
 			users.id AS "user.id",
 			users.phone_number AS "user.phone_number",
-			users.label AS "user.label",
-			users.assigned_to AS "user.assigned_to",
-			users.notes AS "user.notes",
+			users.name AS "user.name",
+			users.job_title AS "user.job_title",
+			users.gender AS "user.gender",
+			users.date_of_birth AS "user.date_of_birth",
 			users.created_at AS "user.created_at",
 			users.updated_at AS "user.updated_at"
 		FROM feedbacks

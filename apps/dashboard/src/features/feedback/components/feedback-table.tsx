@@ -19,7 +19,15 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Star } from "lucide-react";
+import {
+  BriefcaseIcon,
+  CalendarIcon,
+  ClockIcon,
+  PhoneIcon,
+  Star,
+  UserIcon,
+  UsersIcon,
+} from "lucide-react";
 
 type FeedbackTableProps = {
   data: Feedback[];
@@ -35,27 +43,91 @@ export function FeedbackTable({ data }: FeedbackTableProps) {
             {row.original.user.phoneNumber}
           </PreviewCardTrigger>
           <PreviewCardPopup align="start">
-            <div className="flex w-full flex-col gap-2">
-              <h4 className="font-medium">Phone Number Details</h4>
-              <div className="flex w-full flex-1 flex-col gap-1 rounded-sm border bg-muted p-2 text-muted-foreground text-sm">
-                <p>
-                  <strong>Label:</strong> {row.original.user.label}
-                </p>
-                <p>
-                  <strong>Assigned To:</strong>{" "}
-                  {row.original.user.assignedTo ?? "-"}
-                </p>
-                <p>
-                  <strong>Created At:</strong>{" "}
-                  {new Date(row.original.user.createdAt).toLocaleDateString(
-                    "en-US",
-                    {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    }
-                  )}
-                </p>
+            <div className="flex w-full flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                  <UserIcon className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex flex-col">
+                  <h4 className="font-semibold text-sm">
+                    {row.original.user.name}
+                  </h4>
+                  <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                    <PhoneIcon className="h-3 w-3" />
+                    <span>{row.original.user.phoneNumber}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-px w-full bg-border" />
+
+              <div className="flex flex-col gap-2.5">
+                {row.original.user.jobTitle && (
+                  <div className="flex items-start gap-2">
+                    <BriefcaseIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground text-xs">
+                        Job Title
+                      </span>
+                      <span className="font-medium text-sm">
+                        {row.original.user.jobTitle}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {row.original.user.gender && (
+                  <div className="flex items-start gap-2">
+                    <UsersIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground text-xs">
+                        Gender
+                      </span>
+                      <span className="font-medium text-sm">
+                        {row.original.user.gender}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {row.original.user.dateOfBirth && (
+                  <div className="flex items-start gap-2">
+                    <CalendarIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground text-xs">
+                        Date of Birth
+                      </span>
+                      <span className="font-medium text-sm">
+                        {new Date(
+                          row.original.user.dateOfBirth
+                        ).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-2">
+                  <ClockIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-muted-foreground text-xs">
+                      Member Since
+                    </span>
+                    <span className="font-medium text-sm">
+                      {new Date(row.original.user.createdAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </PreviewCardPopup>

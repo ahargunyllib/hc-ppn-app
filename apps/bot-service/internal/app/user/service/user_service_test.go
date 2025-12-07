@@ -30,8 +30,9 @@ func TestUserService_Create(t *testing.T) {
 	ctx := context.Background()
 
 	testID := uuid.New()
-	assignedTo := "John Doe"
-	notes := "Test notes"
+	jobTitle := "Software Engineer"
+	gender := "Laki-laki"
+	dateOfBirth := "1990-01-01"
 
 	tests := []struct {
 		name    string
@@ -44,9 +45,10 @@ func TestUserService_Create(t *testing.T) {
 			name: "success",
 			req: &dto.CreateUserRequest{
 				PhoneNumber: "+1234567890",
-				Label:       "Test User",
-				AssignedTo:  &assignedTo,
-				Notes:       &notes,
+				Name:        "Test User",
+				JobTitle:    &jobTitle,
+				Gender:      &gender,
+				DateOfBirth: &dateOfBirth,
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
@@ -54,9 +56,10 @@ func TestUserService_Create(t *testing.T) {
 				mockUserRepo.EXPECT().Create(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, user *entity.User) error {
 					assert.Equal(t, testID, user.ID)
 					assert.Equal(t, "+1234567890", user.PhoneNumber)
-					assert.Equal(t, "Test User", user.Label)
-					assert.Equal(t, &assignedTo, user.AssignedTo)
-					assert.Equal(t, &notes, user.Notes)
+					assert.Equal(t, "Test User", user.Name)
+					assert.Equal(t, &jobTitle, user.JobTitle)
+					assert.Equal(t, &gender, user.Gender)
+					assert.NotNil(t, user.DateOfBirth)
 					return nil
 				})
 			},
@@ -66,7 +69,7 @@ func TestUserService_Create(t *testing.T) {
 			name: "validation error",
 			req: &dto.CreateUserRequest{
 				PhoneNumber: "123",
-				Label:       "Test User",
+				Name:        "Test User",
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
@@ -81,7 +84,7 @@ func TestUserService_Create(t *testing.T) {
 			name: "invalid phone number - not E.164 format",
 			req: &dto.CreateUserRequest{
 				PhoneNumber: "123456",
-				Label:       "Test User",
+				Name:        "Test User",
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
@@ -96,7 +99,7 @@ func TestUserService_Create(t *testing.T) {
 			name: "uuid generation error",
 			req: &dto.CreateUserRequest{
 				PhoneNumber: "+1234567890",
-				Label:       "Test User",
+				Name:        "Test User",
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
@@ -108,7 +111,7 @@ func TestUserService_Create(t *testing.T) {
 			name: "duplicate phone number",
 			req: &dto.CreateUserRequest{
 				PhoneNumber: "+1234567890",
-				Label:       "Test User",
+				Name:        "Test User",
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
@@ -155,7 +158,7 @@ func TestUserService_GetByID(t *testing.T) {
 	testUser := &entity.User{
 		ID:          testID,
 		PhoneNumber: "+1234567890",
-		Label:       "Test User",
+		Name:        "Test User",
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -235,7 +238,7 @@ func TestUserService_GetByID(t *testing.T) {
 				assert.NotNil(t, result)
 				assert.Equal(t, testID.String(), result.User.ID)
 				assert.Equal(t, "+1234567890", result.User.PhoneNumber)
-				assert.Equal(t, "Test User", result.User.Label)
+				assert.Equal(t, "Test User", result.User.Name)
 			}
 		})
 	}
@@ -257,7 +260,7 @@ func TestUserService_GetByPhoneNumber(t *testing.T) {
 	testUser := &entity.User{
 		ID:          testID,
 		PhoneNumber: "+1234567890",
-		Label:       "Test User",
+		Name:        "Test User",
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -324,7 +327,7 @@ func TestUserService_GetByPhoneNumber(t *testing.T) {
 				assert.NotNil(t, result)
 				assert.Equal(t, testID.String(), result.User.ID)
 				assert.Equal(t, "+1234567890", result.User.PhoneNumber)
-				assert.Equal(t, "Test User", result.User.Label)
+				assert.Equal(t, "Test User", result.User.Name)
 			}
 		})
 	}
@@ -345,20 +348,18 @@ func TestUserService_List(t *testing.T) {
 		{
 			ID:          uuid.New(),
 			PhoneNumber: "+1234567890",
-			Label:       "User 1",
+			Name:        "User 1",
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		},
 		{
 			ID:          uuid.New(),
 			PhoneNumber: "+0987654321",
-			Label:       "User 2",
+			Name:        "User 2",
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		},
 	}
-
-	assignedTo := "John Doe"
 
 	tests := []struct {
 		name      string
@@ -424,27 +425,6 @@ func TestUserService_List(t *testing.T) {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
 				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter *entity.GetUsersFilter) ([]entity.User, int64, error) {
 					assert.Equal(t, "test", filter.Search)
-					return testUsers, int64(2), nil
-				})
-			},
-			wantErr:   false,
-			wantCount: 2,
-			wantPage:  1,
-			wantLimit: 10,
-			wantTotal: 2,
-			wantPages: 1,
-		},
-		{
-			name: "success with assignedTo filter",
-			query: &dto.GetUsersQuery{
-				Page:       1,
-				Limit:      10,
-				AssignedTo: &assignedTo,
-			},
-			setup: func() {
-				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
-				mockUserRepo.EXPECT().List(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, filter *entity.GetUsersFilter) ([]entity.User, int64, error) {
-					assert.Equal(t, &assignedTo, filter.AssignedTo)
 					return testUsers, int64(2), nil
 				})
 			},
@@ -533,15 +513,16 @@ func TestUserService_Update(t *testing.T) {
 	testUser := &entity.User{
 		ID:          testID,
 		PhoneNumber: "+1234567890",
-		Label:       "Test User",
+		Name:        "Test User",
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
 
 	newPhone := "+0987654321"
-	newLabel := "Updated User"
-	newAssignedTo := "Jane Doe"
-	newNotes := "Updated notes"
+	newName := "Updated User"
+	newJobTitle := "Senior Engineer"
+	newGender := "Perempuan"
+	newDateOfBirth := "1985-05-15"
 
 	tests := []struct {
 		name    string
@@ -571,19 +552,19 @@ func TestUserService_Update(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "success - update label",
+			name: "success - update name",
 			param: &dto.UpdateUserParam{
 				ID: testID.String(),
 			},
 			req: &dto.UpdateUserRequest{
-				Label: &newLabel,
+				Name: &newName,
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil).Times(2)
 				mockUUID.EXPECT().Parse(testID.String()).Return(testID, nil)
 				mockUserRepo.EXPECT().FindByID(ctx, testID).Return(testUser, nil)
 				mockUserRepo.EXPECT().Update(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, user *entity.User) error {
-					assert.Equal(t, newLabel, user.Label)
+					assert.Equal(t, newName, user.Name)
 					return nil
 				})
 			},
@@ -596,9 +577,10 @@ func TestUserService_Update(t *testing.T) {
 			},
 			req: &dto.UpdateUserRequest{
 				PhoneNumber: &newPhone,
-				Label:       &newLabel,
-				AssignedTo:  &newAssignedTo,
-				Notes:       &newNotes,
+				Name:        &newName,
+				JobTitle:    &newJobTitle,
+				Gender:      &newGender,
+				DateOfBirth: &newDateOfBirth,
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil).Times(2)
@@ -606,9 +588,10 @@ func TestUserService_Update(t *testing.T) {
 				mockUserRepo.EXPECT().FindByID(ctx, testID).Return(testUser, nil)
 				mockUserRepo.EXPECT().Update(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, user *entity.User) error {
 					assert.Equal(t, newPhone, user.PhoneNumber)
-					assert.Equal(t, newLabel, user.Label)
-					assert.Equal(t, &newAssignedTo, user.AssignedTo)
-					assert.Equal(t, &newNotes, user.Notes)
+					assert.Equal(t, newName, user.Name)
+					assert.Equal(t, &newJobTitle, user.JobTitle)
+					assert.Equal(t, &newGender, user.Gender)
+					assert.NotNil(t, user.DateOfBirth)
 					return nil
 				})
 			},
@@ -620,7 +603,7 @@ func TestUserService_Update(t *testing.T) {
 				ID: "invalid",
 			},
 			req: &dto.UpdateUserRequest{
-				Label: &newLabel,
+				Name: &newName,
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
@@ -673,7 +656,7 @@ func TestUserService_Update(t *testing.T) {
 				ID: "invalid-uuid",
 			},
 			req: &dto.UpdateUserRequest{
-				Label: &newLabel,
+				Name: &newName,
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil).Times(2)
@@ -687,7 +670,7 @@ func TestUserService_Update(t *testing.T) {
 				ID: testID.String(),
 			},
 			req: &dto.UpdateUserRequest{
-				Label: &newLabel,
+				Name: &newName,
 			},
 			setup: func() {
 				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil).Times(2)
