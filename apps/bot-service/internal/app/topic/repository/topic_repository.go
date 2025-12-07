@@ -28,10 +28,10 @@ func (r *topicRepository) BulkCreate(ctx context.Context, topics []entity.Topic)
 func (r *topicRepository) GetHotTopics(ctx context.Context) ([]entity.Topic, error) {
 	query := `
 		SELECT
-			id,
+			MAX(id) AS id,
+			MAX(created_at) AS created_at,
 			title,
-			count,
-			created_at
+			SUM(count) AS count
 		FROM topics
 		WHERE created_at >= CURRENT_DATE - 30 * INTERVAL '1 day'
 		GROUP BY title
