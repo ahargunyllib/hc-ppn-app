@@ -105,6 +105,16 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 
 	s.updateSessionActivity(phoneNumber)
 
+	// Reset feedback prompt if user continues conversation
+	// This prevents auto-close when user is actively engaging
+	s.sessionsMux.Lock()
+	if session.FeedbackPromptSent {
+		session.FeedbackPromptSent = false
+		session.FeedbackPromptSentAt = nil
+		session.IsAutoPrompt = false
+	}
+	s.sessionsMux.Unlock()
+
 	difyReq := &dify.Request{
 		Inputs:         make(map[string]any),
 		Query:          text,
