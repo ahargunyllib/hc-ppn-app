@@ -28,3 +28,12 @@ func (c *TopicController) getHotTopics(ctx *fiber.Ctx) error {
 
 	return response.SendResponse(ctx, fiber.StatusOK, res)
 }
+
+func (c *TopicController) getTopicsCount(ctx *fiber.Ctx) error {
+	res, err := c.topicSvc.GetTopicsCount(ctx.Context())
+	if err != nil {
+		return err
+	}
+
+	return response.SendResponse(ctx, fiber.StatusOK, res)
+}

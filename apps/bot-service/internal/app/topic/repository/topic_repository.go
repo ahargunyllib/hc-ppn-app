@@ -51,3 +51,18 @@ func (r *topicRepository) GetHotTopics(ctx context.Context) ([]entity.Topic, err
 
 	return results, nil
 }
+
+func (r *topicRepository) GetTopicsCount(ctx context.Context) (int, error) {
+	query := `
+		SELECT COUNT(DISTINCT title)
+		FROM topics
+	`
+
+	var count int
+	err := r.db.GetContext(ctx, &count, query)
+	if err != nil {
+		return 0, errx.ErrInternalServer.WithLocation("topicRepository.GetTopicsCount").WithError(err)
+	}
+
+	return count, nil
+}

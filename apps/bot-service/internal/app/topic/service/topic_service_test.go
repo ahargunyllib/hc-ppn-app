@@ -265,3 +265,81 @@ func TestTopicService_GetHotTopics(t *testing.T) {
 		})
 	}
 }
+
+func TestTopicService_GetTopicsCount(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockTopicRepo := topicRepoMock.NewMockTopicRepository(ctrl)
+	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
+
+	service := NewTopicService(mockTopicRepo, mockValidator)
+	ctx := context.Background()
+
+	tests := []struct {
+		name      string
+		setup     func()
+		wantErr   bool
+		wantCount int
+		errType   error
+	}{
+		{
+			name: "success with positive count",
+			setup: func() {
+				mockTopicRepo.EXPECT().GetTopicsCount(ctx).Return(42, nil)
+			},
+			wantErr:   false,
+			wantCount: 42,
+		},
+		{
+			name: "success with zero count",
+			setup: func() {
+				mockTopicRepo.EXPECT().GetTopicsCount(ctx).Return(0, nil)
+			},
+			wantErr:   false,
+			wantCount: 0,
+		},
+		{
+			name: "success with large count",
+			setup: func() {
+				mockTopicRepo.EXPECT().GetTopicsCount(ctx).Return(1000, nil)
+			},
+			wantErr:   false,
+			wantCount: 1000,
+		},
+		{
+			name: "repository error",
+			setup: func() {
+				mockTopicRepo.EXPECT().GetTopicsCount(ctx).Return(0, errx.ErrInternalServer)
+			},
+			wantErr: true,
+			errType: errx.ErrInternalServer,
+		},
+		{
+			name: "database connection error",
+			setup: func() {
+				mockTopicRepo.EXPECT().GetTopicsCount(ctx).Return(0, errors.New("database connection failed"))
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			result, err := service.GetTopicsCount(ctx)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errType != nil {
+					assert.ErrorIs(t, err, tt.errType)
+				}
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, tt.wantCount, result.TotalTopics)
+			}
+		})
+	}
+}

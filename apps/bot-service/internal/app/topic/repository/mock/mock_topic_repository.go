@@ -69,3 +69,18 @@ func (mr *MockTopicRepositoryMockRecorder) GetHotTopics(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHotTopics", reflect.TypeOf((*MockTopicRepository)(nil).GetHotTopics), ctx)
 }
+
+// GetTopicsCount mocks base method.
+func (m *MockTopicRepository) GetTopicsCount(ctx context.Context) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTopicsCount", ctx)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTopicsCount indicates an expected call of GetTopicsCount.
+func (mr *MockTopicRepositoryMockRecorder) GetTopicsCount(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTopicsCount", reflect.TypeOf((*MockTopicRepository)(nil).GetTopicsCount), ctx)
+}

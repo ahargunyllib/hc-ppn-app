@@ -2,11 +2,14 @@ import {
   useGetFeedbackMetrics,
   useGetSatisfactionTrend,
 } from "@/shared/repositories/feedback/query";
-import { useGetHotTopics } from "@/shared/repositories/topic/query";
+import {
+  useGetHotTopics,
+  useGetTopicsCount,
+} from "@/shared/repositories/topic/query";
 import { useGetUserMetrics } from "@/shared/repositories/user/query";
 import {
   CircleAlertIcon,
-  Clock,
+  FolderOpen,
   MessageSquare,
   TrendingUp,
   Users,
@@ -48,18 +51,30 @@ export function AnalyticsDashboard() {
     error: hotTopicsError,
   } = useGetHotTopics();
 
+  const {
+    data: topicsCount,
+    isLoading: isLoadingTopicsCount,
+    error: topicsCountError,
+  } = useGetTopicsCount();
+
   const isLoading =
     isLoadingUserMetrics ||
     isLoadingFeedbackMetrics ||
     isLoadingSatisfactionTrend ||
-    isLoadingHotTopics;
+    isLoadingHotTopics ||
+    isLoadingTopicsCount;
   const error =
     userMetricsError ||
     feedbackMetricsError ||
     satisfactionTrendError ||
-    hotTopicsError;
+    hotTopicsError ||
+    topicsCountError;
   const dataExists =
-    !!userMetrics && !!feedbackMetrics && !!satisfactionTrend && !!hotTopics;
+    !!userMetrics &&
+    !!feedbackMetrics &&
+    !!satisfactionTrend &&
+    !!hotTopics &&
+    !!topicsCount;
 
   if (isLoading) {
     return <Loading />;
@@ -90,7 +105,11 @@ export function AnalyticsDashboard() {
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard icon={MessageSquare} title="Total Interactions" value={0} />
-        <MetricCard icon={Clock} title="Avg Response Time" value={0} />
+        <MetricCard
+          icon={FolderOpen}
+          title="Total Topics"
+          value={topicsCount.payload.totalTopics.toLocaleString()}
+        />
         <MetricCard
           icon={TrendingUp}
           title="Satisfaction Score"

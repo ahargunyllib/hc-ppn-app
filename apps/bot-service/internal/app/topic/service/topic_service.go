@@ -44,3 +44,16 @@ func (s *TopicService) GetHotTopics(ctx context.Context) (*dto.GetHotTopicsRespo
 
 	return res, nil
 }
+
+func (s *TopicService) GetTopicsCount(ctx context.Context) (*dto.GetTopicsCountResponse, error) {
+	count, err := s.topicRepo.GetTopicsCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &dto.GetTopicsCountResponse{
+		TotalTopics: count,
+	}
+
+	return res, nil
+}

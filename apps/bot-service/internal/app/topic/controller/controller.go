@@ -20,4 +20,5 @@ func InitTopicController(router fiber.Router, topicSvc *service.TopicService, mi
 	// TODO: Add middleware for authentication and authorization
 	topicRouter.Post("/bulk", controller.bulkCreate)
 	topicRouter.Get("/hot", controller.getHotTopics)
+	topicRouter.Get("/count", controller.getTopicsCount)
 }

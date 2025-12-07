@@ -12,9 +12,11 @@ import (
 type TopicRepository interface {
 	BulkCreate(ctx context.Context, topics []entity.Topic) error
 	GetHotTopics(ctx context.Context) ([]entity.Topic, error)
+	GetTopicsCount(ctx context.Context) (int, error)
 }
 
 type TopicService interface {
 	BulkCreate(ctx context.Context, req *dto.BulkCreateTopicsRequest) error
 	GetHotTopics(ctx context.Context) (*dto.GetHotTopicsResponse, error)
+	GetTopicsCount(ctx context.Context) (*dto.GetTopicsCountResponse, error)
 }

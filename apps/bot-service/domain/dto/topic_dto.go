@@ -26,6 +26,10 @@ type GetHotTopicsResponse struct {
 	Topics []TopicResponse `json:"topics"`
 }
 
+type GetTopicsCountResponse struct {
+	TotalTopics int `json:"totalTopics"`
+}
+
 func ToTopicResponse(topic *entity.Topic) TopicResponse {
 	return TopicResponse{
 		ID:        topic.ID,
