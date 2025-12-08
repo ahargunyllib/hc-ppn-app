@@ -24,24 +24,12 @@ func ToUserResponse(user *entity.User) UserResponse {
 		dateOfBirth = &formatted
 	}
 
-	genderMap := map[string]string{
-		"male":   "Laki-laki",
-		"female": "Perempuan",
-	}
-
-	var gender *string
-	if user.Gender != nil {
-		if val, ok := genderMap[*user.Gender]; ok {
-			gender = &val
-		}
-	}
-
 	return UserResponse{
 		ID:          user.ID.String(),
 		PhoneNumber: user.PhoneNumber,
 		Name:        user.Name,
 		JobTitle:    user.JobTitle,
-		Gender:      gender,
+		Gender:      user.Gender,
 		DateOfBirth: dateOfBirth,
 		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
