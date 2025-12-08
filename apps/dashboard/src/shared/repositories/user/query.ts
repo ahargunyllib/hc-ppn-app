@@ -4,6 +4,7 @@ import {
   deleteUser,
   getUserMetrics,
   getUsers,
+  importUsersFromCSV,
   updateUser,
 } from "./action";
 import type {
@@ -60,3 +61,16 @@ export const useGetUserMetrics = () =>
     queryKey: ["userMetrics"],
     queryFn: () => getUserMetrics(),
   });
+
+export const useImportUsersFromCSV = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["importUsersFromCSV"],
+    mutationFn: (file: File) => importUsersFromCSV(file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      qc.invalidateQueries({ queryKey: ["userMetrics"] });
+    },
+  });
+};

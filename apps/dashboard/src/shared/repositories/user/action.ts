@@ -4,6 +4,7 @@ import type {
   GetUserMetricsResponse,
   GetUsersQuery,
   GetUsersResponse,
+  ImportUsersFromCSVResponse,
   UpdateUserRequest,
 } from "./dto";
 
@@ -27,5 +28,21 @@ export const deleteUser = async (id: string) => {
 
 export const getUserMetrics = async () => {
   const response = await api.get<GetUserMetricsResponse>("/users/metrics");
+  return response.data;
+};
+
+export const importUsersFromCSV = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await api.post<ImportUsersFromCSVResponse>(
+    "/users/import-csv",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
   return response.data;
 };

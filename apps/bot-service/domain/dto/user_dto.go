@@ -100,3 +100,16 @@ type GetAllPhoneNumbersResponse struct {
 type GetUserMetricsResponse struct {
 	TotalUsers int `json:"totalUsers"`
 }
+
+type ImportUsersFromCSVResponse struct {
+	Total   int                          `json:"total"`
+	Success int                          `json:"success"`
+	Failed  int                          `json:"failed"`
+	Errors  []ImportUsersFromCSVError    `json:"errors"`
+	Users   []CreateUserResponse         `json:"users"`
+}
+
+type ImportUsersFromCSVError struct {
+	Row   int    `json:"row"`
+	Error string `json:"error"`
+}

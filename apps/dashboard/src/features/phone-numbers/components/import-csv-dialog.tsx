@@ -11,20 +11,9 @@ import {
 import { Input } from "@/shared/components/ui/input";
 import { toastManager } from "@/shared/components/ui/toast";
 import { parseAPIError } from "@/shared/lib/api-client";
-import type { CreateUserRequest } from "@/shared/repositories/user/dto";
-import { CreateUserSchema } from "@/shared/repositories/user/dto";
-import { useCreateUser } from "@/shared/repositories/user/query";
+import { useImportUsersFromCSV } from "@/shared/repositories/user/query";
 import { Upload } from "lucide-react";
-import Papa from "papaparse";
 import { useState } from "react";
-
-type CSVRow = {
-  phoneNumber: string;
-  name: string;
-  jobTitle?: string;
-  gender?: string;
-  dateOfBirth?: string;
-};
 
 type ImportResult = {
   total: number;
@@ -35,11 +24,9 @@ type ImportResult = {
 
 export default function ImportCSVDialog() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [progress, setProgress] = useState<string>("");
   const [result, setResult] = useState<ImportResult | null>(null);
 
-  const { mutateAsync } = useCreateUser();
+  const { mutate, isPending } = useImportUsersFromCSV();
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -49,59 +36,18 @@ export default function ImportCSVDialog() {
       return;
     }
 
-    setIsImporting(true);
-    setProgress("Membaca file CSV...");
     setResult(null);
 
-    Papa.parse<CSVRow>(file, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header: string) => header.trim(),
-      complete: async (results) => {
+    mutate(file, {
+      onSuccess: (data) => {
         const importResult: ImportResult = {
-          total: results.data.length,
-          success: 0,
-          failed: 0,
-          errors: [],
+          total: data.payload.total,
+          success: data.payload.success,
+          failed: data.payload.failed,
+          errors: data.payload.errors,
         };
 
-        for (let i = 0; i < results.data.length; i++) {
-          const row = results.data[i];
-          const rowNumber = i + 2; // +2 because row 1 is header, and index starts at 0
-
-          setProgress(`Mengimpor baris ${rowNumber} dari ${results.data.length + 1}...`);
-
-          try {
-            // Prepare the user data
-            const userData: CreateUserRequest = {
-              phoneNumber: row.phoneNumber?.trim() ?? "",
-              name: row.name?.trim() ?? "",
-              jobTitle: row.jobTitle?.trim() ?? "",
-              gender: row.gender?.trim() ?? "",
-              dateOfBirth: row.dateOfBirth?.trim() ?? "",
-            };
-
-            // Validate the data
-            const validatedData = CreateUserSchema.parse(userData);
-
-            // Create the user
-            await mutateAsync(validatedData);
-
-            importResult.success++;
-          } catch (error) {
-            importResult.failed++;
-            const errorMessage =
-              error instanceof Error ? error.message : "Unknown error";
-            importResult.errors.push({
-              row: rowNumber,
-              error: errorMessage,
-            });
-          }
-        }
-
         setResult(importResult);
-        setProgress("");
-        setIsImporting(false);
 
         // Show summary toast
         if (importResult.failed === 0) {
@@ -121,13 +67,11 @@ export default function ImportCSVDialog() {
         // Reset file input
         event.target.value = "";
       },
-      error: (error) => {
-        setIsImporting(false);
-        setProgress("");
+      onError: (error) => {
         toastManager.add({
           type: "error",
-          title: "Gagal membaca file CSV",
-          description: error.message,
+          title: "Gagal mengimpor CSV",
+          description: parseAPIError(error),
         });
         event.target.value = "";
       },
@@ -135,10 +79,9 @@ export default function ImportCSVDialog() {
   };
 
   const handleClose = () => {
-    if (!isImporting) {
+    if (!isPending) {
       setIsOpen(false);
       setResult(null);
-      setProgress("");
     }
   };
 
@@ -209,16 +152,16 @@ export default function ImportCSVDialog() {
             <div>
               <Input
                 accept=".csv"
-                disabled={isImporting}
+                disabled={isPending}
                 onChange={handleFileChange}
                 type="file"
               />
             </div>
 
             {/* Progress */}
-            {isImporting && (
+            {isPending && (
               <div className="rounded-md border border-border bg-muted p-3">
-                <p className="text-sm">{progress}</p>
+                <p className="text-sm">Mengimpor data...</p>
               </div>
             )}
 
@@ -253,8 +196,8 @@ export default function ImportCSVDialog() {
               </div>
             )}
 
-            <Button disabled={isImporting} onClick={handleClose}>
-              {isImporting ? "Mengimpor..." : "Tutup"}
+            <Button disabled={isPending} onClick={handleClose}>
+              {isPending ? "Mengimpor..." : "Tutup"}
             </Button>
           </div>
         </DialogPanel>

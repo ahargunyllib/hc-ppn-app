@@ -1,7 +1,11 @@
 package controller
 
 import (
+	"encoding/csv"
+	"io"
+
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/dto"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/errx"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/helpers/http/response"
 	"github.com/gofiber/fiber/v2"
 )
@@ -90,6 +94,54 @@ func (c *UserController) getAllPhoneNumbers(ctx *fiber.Ctx) error {
 
 func (c *UserController) getMetrics(ctx *fiber.Ctx) error {
 	res, err := c.userSvc.GetMetrics(ctx.Context())
+	if err != nil {
+		return err
+	}
+
+	return response.SendResponse(ctx, fiber.StatusOK, res)
+}
+
+func (c *UserController) importCSV(ctx *fiber.Ctx) error {
+	// Get the uploaded file
+	file, err := ctx.FormFile("file")
+	if err != nil {
+		return errx.ErrInvalidRequest.WithDetails(map[string]any{
+			"error": "No file uploaded",
+		}).WithLocation("UserController.importCSV").WithError(err)
+	}
+
+	// Open the file
+	fileContent, err := file.Open()
+	if err != nil {
+		return errx.ErrInternalServer.WithDetails(map[string]any{
+			"error": "Failed to open file",
+		}).WithLocation("UserController.importCSV").WithError(err)
+	}
+	defer fileContent.Close()
+
+	// Parse CSV
+	reader := csv.NewReader(fileContent)
+	records, err := reader.ReadAll()
+	if err != nil {
+		if err == io.EOF {
+			return errx.ErrInvalidRequest.WithDetails(map[string]any{
+				"error": "Empty CSV file",
+			}).WithLocation("UserController.importCSV")
+		}
+		return errx.ErrInvalidRequest.WithDetails(map[string]any{
+			"error": "Failed to parse CSV file",
+		}).WithLocation("UserController.importCSV").WithError(err)
+	}
+
+	// Validate CSV has at least header row
+	if len(records) < 1 {
+		return errx.ErrInvalidRequest.WithDetails(map[string]any{
+			"error": "CSV file must have at least a header row",
+		}).WithLocation("UserController.importCSV")
+	}
+
+	// Import users
+	res, err := c.userSvc.ImportUsersFromCSV(ctx.Context(), records)
 	if err != nil {
 		return err
 	}

@@ -234,3 +234,73 @@ func (s *UserService) GetMetrics(ctx context.Context) (*dto.GetUserMetricsRespon
 
 	return res, nil
 }
+
+func (s *UserService) ImportUsersFromCSV(ctx context.Context, records [][]string) (*dto.ImportUsersFromCSVResponse, error) {
+	res := &dto.ImportUsersFromCSVResponse{
+		Total:   len(records) - 1, // Exclude header row
+		Success: 0,
+		Failed:  0,
+		Errors:  make([]dto.ImportUsersFromCSVError, 0),
+		Users:   make([]dto.CreateUserResponse, 0),
+	}
+
+	// Skip header row
+	for i := 1; i < len(records); i++ {
+		record := records[i]
+		rowNumber := i + 1 // +1 because spreadsheets start at 1
+
+		// Check if row has the correct number of columns (at least 2 for phoneNumber and name)
+		if len(record) < 2 {
+			res.Failed++
+			res.Errors = append(res.Errors, dto.ImportUsersFromCSVError{
+				Row:   rowNumber,
+				Error: "Invalid row format: missing required columns",
+			})
+			continue
+		}
+
+		// Parse CSV columns (phoneNumber, name, jobTitle, gender, dateOfBirth)
+		phoneNumber := record[0]
+		name := record[1]
+
+		var jobTitle *string
+		if len(record) > 2 && record[2] != "" {
+			jobTitle = &record[2]
+		}
+
+		var gender *string
+		if len(record) > 3 && record[3] != "" {
+			gender = &record[3]
+		}
+
+		var dateOfBirth *string
+		if len(record) > 4 && record[4] != "" {
+			dateOfBirth = &record[4]
+		}
+
+		// Create user request
+		userReq := &dto.CreateUserRequest{
+			PhoneNumber: phoneNumber,
+			Name:        name,
+			JobTitle:    jobTitle,
+			Gender:      gender,
+			DateOfBirth: dateOfBirth,
+		}
+
+		// Create user
+		userRes, err := s.Create(ctx, userReq)
+		if err != nil {
+			res.Failed++
+			res.Errors = append(res.Errors, dto.ImportUsersFromCSVError{
+				Row:   rowNumber,
+				Error: err.Error(),
+			})
+			continue
+		}
+
+		res.Success++
+		res.Users = append(res.Users, *userRes)
+	}
+
+	return res, nil
+}
