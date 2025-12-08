@@ -17,6 +17,7 @@ import { useGetUsers } from "@/shared/repositories/user/query";
 import { CircleAlertIcon } from "lucide-react";
 import { useState } from "react";
 import CreatePhoneNumberDialog from "./components/create-phone-number-dialog";
+import ImportCSVDialog from "./components/import-csv-dialog";
 import { PhoneNumbersTable } from "./components/phone-numbers-table";
 
 export function PhoneNumbersManagement() {
@@ -32,7 +33,10 @@ export function PhoneNumbersManagement() {
           <CardTitle>Phone Number Management</CardTitle>
           <CardDescription>Manage user phone numbers.</CardDescription>
           <CardAction>
-            <Skeleton className="h-8 w-32 rounded-md" />
+            <div className="flex gap-2">
+              <Skeleton className="h-8 w-32 rounded-md" />
+              <Skeleton className="h-8 w-32 rounded-md" />
+            </div>
           </CardAction>
         </CardHeader>
         <CardContent>
@@ -58,7 +62,10 @@ export function PhoneNumbersManagement() {
         <CardTitle>Phone Number Management</CardTitle>
         <CardDescription>Manage user phone numbers.</CardDescription>
         <CardAction>
-          <CreatePhoneNumberDialog />
+          <div className="flex gap-2">
+            <ImportCSVDialog />
+            <CreatePhoneNumberDialog />
+          </div>
         </CardAction>
       </CardHeader>
       <CardContent>
