@@ -31,7 +31,7 @@ func TestUserService_Create(t *testing.T) {
 
 	testID := uuid.New()
 	jobTitle := "Software Engineer"
-	gender := "Laki-laki"
+	gender := "male"
 	dateOfBirth := "1990-01-01"
 
 	tests := []struct {
@@ -521,7 +521,7 @@ func TestUserService_Update(t *testing.T) {
 	newPhone := "+0987654321"
 	newName := "Updated User"
 	newJobTitle := "Senior Engineer"
-	newGender := "Perempuan"
+	newGender := "female"
 	newDateOfBirth := "1985-05-15"
 
 	tests := []struct {
