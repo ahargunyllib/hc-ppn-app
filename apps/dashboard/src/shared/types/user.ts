@@ -1,9 +1,10 @@
 export type User = {
   id: string;
   phoneNumber: string;
-  label: string;
-  assignedTo?: string;
-  notes?: string;
+  name: string;
+  jobTitle?: string;
+  gender?: string;
+  dateOfBirth?: string;
   createdAt: string;
   updatedAt: string;
 };

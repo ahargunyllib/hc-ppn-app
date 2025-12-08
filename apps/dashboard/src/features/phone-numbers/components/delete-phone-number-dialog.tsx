@@ -65,15 +65,9 @@ export default function DeletePhoneNumberDialog({
               <span>{user.phoneNumber}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-medium">Label:</span>
-              <span>{user.label}</span>
+              <span className="font-medium">Name:</span>
+              <span>{user.name}</span>
             </div>
-            {user.assignedTo && (
-              <div className="flex justify-between">
-                <span className="font-medium">Assigned To:</span>
-                <span>{user.assignedTo}</span>
-              </div>
-            )}
           </div>
         </DialogPanel>
         <DialogFooter>

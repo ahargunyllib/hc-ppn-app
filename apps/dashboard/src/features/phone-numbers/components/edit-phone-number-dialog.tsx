@@ -17,66 +17,74 @@ import {
 import { Input } from "@/shared/components/ui/input";
 import { toastManager } from "@/shared/components/ui/toast";
 import { parseAPIError } from "@/shared/lib/api-client";
-import { CreateUserSchema } from "@/shared/repositories/user/dto";
-import { useCreateUser } from "@/shared/repositories/user/query";
+import { UpdateUserSchema } from "@/shared/repositories/user/dto";
+import { useUpdateUser } from "@/shared/repositories/user/query";
+import type { User } from "@/shared/types/user";
 import { useForm } from "@tanstack/react-form";
-import { Plus } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 import { useState } from "react";
 
-export default function CreatePhoneNumberDialog() {
+type EditPhoneNumberDialogProps = {
+  user: User;
+};
+
+export default function EditPhoneNumberDialog({
+  user,
+}: EditPhoneNumberDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const { mutate, isPending } = useCreateUser();
+  const { mutate, isPending } = useUpdateUser();
 
   const form = useForm({
     defaultValues: {
-      phoneNumber: "",
-      name: "",
-      jobTitle: "",
-      gender: "",
-      dateOfBirth: "",
+      phoneNumber: user.phoneNumber,
+      name: user.name,
+      jobTitle: user.jobTitle || "",
+      gender: user.gender || "",
+      dateOfBirth: user.dateOfBirth || "",
     },
     validators: {
-      onSubmit: CreateUserSchema,
+      onSubmit: UpdateUserSchema,
     },
     onSubmit: ({ value }) => {
-      mutate(value, {
-        onSuccess: () => {
-          toastManager.add({
-            type: "success",
-            title: "User created successfully",
-          });
-          setIsOpen(false);
-          form.reset();
-        },
-        onError: (err) => {
-          toastManager.add({
-            type: "error",
-            title: "Failed to create user",
-            description: parseAPIError(err),
-          });
-        },
-      });
+      mutate(
+        { id: user.id, data: value },
+        {
+          onSuccess: () => {
+            toastManager.add({
+              type: "success",
+              title: "User updated successfully",
+            });
+            setIsOpen(false);
+          },
+          onError: (err) => {
+            toastManager.add({
+              type: "error",
+              title: "Failed to update user",
+              description: parseAPIError(err),
+            });
+          },
+        }
+      );
     },
   });
 
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
-      <DialogTrigger render={<Button size="sm" />}>
-        <Plus className="mr-2 h-4 w-4" />
-        Add Phone Number
+      <DialogTrigger render={<Button size="icon-xs" variant="ghost" />}>
+        <PencilIcon />
       </DialogTrigger>
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>Create Phone Number</DialogTitle>
+          <DialogTitle>Edit Phone Number</DialogTitle>
           <DialogDescription>
-            Create a new phone number for a user.
+            Update the phone number and user details.
           </DialogDescription>
         </DialogHeader>
         <DialogPanel>
           <form
             className="flex flex-col gap-4"
-            id="create-phone-number-form"
+            id="edit-phone-number-form"
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -91,9 +99,7 @@ export default function CreatePhoneNumberDialog() {
                   name={field.name}
                   touched={field.state.meta.isTouched}
                 >
-                  <FieldLabel htmlFor={field.name}>
-                    Phone Number <span className="text-red-500">*</span>
-                  </FieldLabel>
+                  <FieldLabel htmlFor={field.name}>Phone Number</FieldLabel>
                   <FieldDescription>
                     Include country code, e.g., +62.
                   </FieldDescription>
@@ -125,10 +131,7 @@ export default function CreatePhoneNumberDialog() {
                   name={field.name}
                   touched={field.state.meta.isTouched}
                 >
-                  <FieldLabel htmlFor={field.name}>
-                    Name
-                    <span className="text-red-500">*</span>
-                  </FieldLabel>
+                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
                   <Input
                     aria-invalid={
                       field.state.meta.isTouched && !field.state.meta.isValid
@@ -240,10 +243,10 @@ export default function CreatePhoneNumberDialog() {
               {() => (
                 <Button
                   disabled={isPending}
-                  form="create-phone-number-form"
+                  form="edit-phone-number-form"
                   type="submit"
                 >
-                  {isPending ? "Loading..." : "Create"}
+                  {isPending ? "Loading..." : "Update"}
                 </Button>
               )}
             </form.Subscribe>

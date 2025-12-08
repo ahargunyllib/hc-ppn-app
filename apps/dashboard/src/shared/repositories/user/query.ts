@@ -1,6 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUser, deleteUser, getUserMetrics, getUsers } from "./action";
-import type { CreateUserRequest, GetUsersQuery } from "./dto";
+import {
+  createUser,
+  deleteUser,
+  getUserMetrics,
+  getUsers,
+  updateUser,
+} from "./action";
+import type {
+  CreateUserRequest,
+  GetUsersQuery,
+  UpdateUserRequest,
+} from "./dto";
 
 export const useGetUsers = (query?: GetUsersQuery) =>
   useQuery({
@@ -14,6 +24,19 @@ export const useCreateUser = () => {
   return useMutation({
     mutationKey: ["createUser"],
     mutationFn: (req: CreateUserRequest) => createUser(req),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+};
+
+export const useUpdateUser = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["updateUser"],
+    mutationFn: ({ id, data }: { id: string; data: UpdateUserRequest }) =>
+      updateUser(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["users"] });
     },

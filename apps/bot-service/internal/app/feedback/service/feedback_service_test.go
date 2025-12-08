@@ -181,7 +181,7 @@ func TestFeedbackService_GetByID(t *testing.T) {
 		User: entity.User{
 			ID:          testUserID,
 			PhoneNumber: "+1234567890",
-			Label:       "Test User",
+			Name:        "Test User",
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		},
@@ -289,7 +289,7 @@ func TestFeedbackService_List(t *testing.T) {
 			User: entity.User{
 				ID:          testUserID,
 				PhoneNumber: "+1234567890",
-				Label:       "User 1",
+				Name:        "User 1",
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
 			},
@@ -302,7 +302,7 @@ func TestFeedbackService_List(t *testing.T) {
 			User: entity.User{
 				ID:          uuid.New(),
 				PhoneNumber: "+0987654321",
-				Label:       "User 2",
+				Name:        "User 2",
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
 			},

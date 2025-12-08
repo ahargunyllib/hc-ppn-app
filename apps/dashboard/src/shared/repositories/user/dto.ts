@@ -6,7 +6,6 @@ import z from "zod";
 export type GetUsersQuery = {
   page?: number;
   limit?: number;
-  assignedTo?: string;
   search?: string;
 };
 
@@ -28,30 +27,54 @@ export const CreateUserSchema = z.object({
     .max(20, {
       message: "Phone number must be at most 20 digits",
     }),
-  label: z
+  name: z
     .string()
     .min(1, {
-      message: "Label is required",
+      message: "Name is required",
     })
     .max(255, {
-      message: "Label must be at most 255 characters",
+      message: "Name must be at most 255 characters",
     }),
-  // https://stackoverflow.com/questions/73715295/react-hook-form-with-zod-resolver-optional-field
-  assignedTo: z.union([
+  jobTitle: z.union([
     z
       .string()
       .min(1, {
-        message: "Assigned To must be at least 1 character",
+        message: "Job Title must be at least 1 character",
       })
       .max(255, {
-        message: "Assigned To must be at most 255 characters",
+        message: "Job Title must be at most 255 characters",
       }),
     z.literal(""),
   ]),
-  notes: z.union([
-    z.string().max(1000, {
-      message: "Notes must be at most 1000 characters",
-    }),
+  gender: z.union([
+    z.string().refine(
+      (val) => {
+        if (!val) {
+          return true;
+        }
+
+        const allowedGenders = ["male", "female"];
+        return allowedGenders.includes(val);
+      },
+      {
+        message: "Gender must be either male or female",
+      }
+    ),
+    z.literal(""),
+  ]),
+  dateOfBirth: z.union([
+    z.string().refine(
+      (val) => {
+        if (!val) {
+          return true;
+        }
+        const date = new Date(val);
+        return !Number.isNaN(date.getTime());
+      },
+      {
+        message: "Invalid date format",
+      }
+    ),
     z.literal(""),
   ]),
 });
@@ -61,6 +84,77 @@ export type CreateUserRequest = z.infer<typeof CreateUserSchema>;
 export type CreateUserResponse = APIResponse<{
   id: string;
 }>;
+
+export const UpdateUserSchema = z.object({
+  phoneNumber: z.union([
+    z
+      .e164({
+        error: "Invalid phone number format",
+      })
+      .min(10, {
+        message: "Phone number must be at least 10 digits",
+      })
+      .max(20, {
+        message: "Phone number must be at most 20 digits",
+      }),
+    z.literal(""),
+  ]),
+  name: z.union([
+    z
+      .string()
+      .min(1, {
+        message: "Name must be at least 1 character",
+      })
+      .max(255, {
+        message: "Name must be at most 255 characters",
+      }),
+    z.literal(""),
+  ]),
+  jobTitle: z.union([
+    z
+      .string()
+      .min(1, {
+        message: "Job Title must be at least 1 character",
+      })
+      .max(255, {
+        message: "Job Title must be at most 255 characters",
+      }),
+    z.literal(""),
+  ]),
+  gender: z.union([
+    z.string().refine(
+      (val) => {
+        if (!val) {
+          return true;
+        }
+
+        const allowedGenders = ["male", "female"];
+        return allowedGenders.includes(val);
+      },
+      {
+        message: "Gender must be either male or female",
+      }
+    ),
+    z.literal(""),
+  ]),
+  dateOfBirth: z.union([
+    z.string().refine(
+      (val) => {
+        if (!val) {
+          return true;
+        }
+        const date = new Date(val);
+        return !Number.isNaN(date.getTime());
+      },
+      {
+        message: "Invalid date format",
+      }
+    ),
+    z.literal(""),
+  ]),
+});
+
+export type UpdateUserRequest = z.infer<typeof UpdateUserSchema>;
 
 export type GetUserMetricsResponse = APIResponse<{
   totalUsers: number;

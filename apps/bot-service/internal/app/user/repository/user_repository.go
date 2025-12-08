@@ -16,8 +16,8 @@ import (
 
 func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 	query := `
-		INSERT INTO users (id, phone_number, label, assigned_to, notes, created_at, updated_at)
-		VALUES (:id, :phone_number, :label, :assigned_to, :notes, :created_at, :updated_at)
+		INSERT INTO users (id, phone_number, name, job_title, gender, date_of_birth, created_at, updated_at)
+		VALUES (:id, :phone_number, :name, :job_title, :gender, :date_of_birth, :created_at, :updated_at)
 	`
 
 	_, err := r.db.NamedExecContext(
@@ -52,7 +52,7 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 
 func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
 	query := `
-		SELECT id, phone_number, label, assigned_to, notes, created_at, updated_at
+		SELECT id, phone_number, name, job_title, gender, date_of_birth, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
@@ -75,7 +75,7 @@ func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Us
 
 func (r *userRepository) FindByPhoneNumber(ctx context.Context, phoneNumber string) (*entity.User, error) {
 	query := `
-		SELECT id, phone_number, label, assigned_to, notes, created_at, updated_at
+		SELECT id, phone_number, name, job_title, gender, date_of_birth, created_at, updated_at
 		FROM users
 		WHERE phone_number = $1
 	`
@@ -105,18 +105,13 @@ func (r *userRepository) List(ctx context.Context, filter *entity.GetUsersFilter
 	var args []any
 
 	qb.WriteString(`
-		SELECT id, phone_number, label, assigned_to, notes, created_at, updated_at
+		SELECT id, phone_number, name, job_title, gender, date_of_birth, created_at, updated_at
 		FROM users
 	`)
 
 	if filter.Search != "" {
-		whereClauses.WriteString(fmt.Sprintf(" AND (phone_number ILIKE $%d OR label ILIKE $%d)", len(args)+1, len(args)+1))
+		whereClauses.WriteString(fmt.Sprintf(" AND (phone_number ILIKE $%d OR name ILIKE $%d)", len(args)+1, len(args)+1))
 		args = append(args, "%"+filter.Search+"%")
-	}
-
-	if filter.AssignedTo != nil && *filter.AssignedTo != "" {
-		whereClauses.WriteString(fmt.Sprintf(" AND assigned_to = $%d", len(args)+1))
-		args = append(args, *filter.AssignedTo)
 	}
 
 	var total int64
@@ -150,7 +145,7 @@ func (r *userRepository) List(ctx context.Context, filter *entity.GetUsersFilter
 func (r *userRepository) Update(ctx context.Context, user *entity.User) error {
 	query := `
 		UPDATE users
-		SET phone_number = :phone_number, label = :label, assigned_to = :assigned_to, notes = :notes, updated_at = :updated_at
+		SET phone_number = :phone_number, name = :name, job_title = :job_title, gender = :gender, date_of_birth = :date_of_birth, updated_at = :updated_at
 		WHERE id = :id
 	`
 

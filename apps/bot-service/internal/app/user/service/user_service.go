@@ -19,12 +19,24 @@ func (s *UserService) Create(ctx context.Context, req *dto.CreateUserRequest) (*
 		return nil, errx.ErrInternalServer.WithLocation("UserService.Create").WithError(err)
 	}
 
+	var dateOfBirth *time.Time
+	if req.DateOfBirth != nil && *req.DateOfBirth != "" {
+		parsedDate, err := time.Parse(time.DateOnly, *req.DateOfBirth)
+		if err != nil {
+			return nil, errx.ErrInvalidDateFormat.WithDetails(map[string]any{
+				"req.DateOfBirth": *req.DateOfBirth,
+			}).WithLocation("UserService.Create").WithError(err)
+		}
+		dateOfBirth = &parsedDate
+	}
+
 	user := &entity.User{
 		ID:          id,
 		PhoneNumber: req.PhoneNumber,
-		Label:       req.Label,
-		AssignedTo:  req.AssignedTo,
-		Notes:       req.Notes,
+		Name:        req.Name,
+		JobTitle:    req.JobTitle,
+		Gender:      req.Gender,
+		DateOfBirth: dateOfBirth,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -96,10 +108,9 @@ func (s *UserService) List(ctx context.Context, query *dto.GetUsersQuery) (*dto.
 	page := max(query.Page, 1)
 
 	filter := entity.GetUsersFilter{
-		Offset:     (page - 1) * limit,
-		Limit:      limit,
-		Search:     query.Search,
-		AssignedTo: query.AssignedTo,
+		Offset: (page - 1) * limit,
+		Limit:  limit,
+		Search: query.Search,
 	}
 
 	users, total, err := s.userRepo.List(ctx, &filter)
@@ -147,14 +158,27 @@ func (s *UserService) Update(ctx context.Context, param *dto.UpdateUserParam, re
 	if req.PhoneNumber != nil {
 		user.PhoneNumber = *req.PhoneNumber
 	}
-	if req.Label != nil {
-		user.Label = *req.Label
+	if req.Name != nil {
+		user.Name = *req.Name
 	}
-	if req.AssignedTo != nil {
-		user.AssignedTo = req.AssignedTo
+	if req.JobTitle != nil {
+		user.JobTitle = req.JobTitle
 	}
-	if req.Notes != nil {
-		user.Notes = req.Notes
+	if req.Gender != nil {
+		user.Gender = req.Gender
+	}
+	if req.DateOfBirth != nil {
+		if *req.DateOfBirth == "" {
+			user.DateOfBirth = nil
+		} else {
+			parsedDate, err := time.Parse(time.DateOnly, *req.DateOfBirth)
+			if err != nil {
+				return errx.ErrInvalidDateFormat.WithDetails(map[string]any{
+					"req.DateOfBirth": *req.DateOfBirth,
+				}).WithLocation("UserService.Update").WithError(err)
+			}
+			user.DateOfBirth = &parsedDate
+		}
 	}
 
 	user.UpdatedAt = time.Now()

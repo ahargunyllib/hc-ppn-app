@@ -14,6 +14,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import DeletePhoneNumberDialog from "./delete-phone-number-dialog";
+import EditPhoneNumberDialog from './edit-phone-number-dialog';
 
 type PhoneNumbersTableProps = {
   data: User[];
@@ -26,12 +27,12 @@ export function PhoneNumbersTable({ data }: PhoneNumbersTableProps) {
       header: "Phone Number",
     },
     {
-      accessorKey: "label",
-      header: "Label",
+      accessorKey: "name",
+      header: "Name",
     },
     {
-      accessorKey: "assignedTo",
-      header: "Assigned To",
+      accessorKey: "jobTitle",
+      header: "Job Title",
       cell: ({ getValue }) => getValue<string>() || "-",
     },
     {
@@ -49,6 +50,7 @@ export function PhoneNumbersTable({ data }: PhoneNumbersTableProps) {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex flex-row gap-2">
+          <EditPhoneNumberDialog user={row.original} />
           <DeletePhoneNumberDialog user={row.original} />
         </div>
       ),
