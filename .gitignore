@@ -222,3 +222,4 @@ $RECYCLE.BIN/
 # Moon
 .moon/cache
 .moon/docker
+package-lock.json
