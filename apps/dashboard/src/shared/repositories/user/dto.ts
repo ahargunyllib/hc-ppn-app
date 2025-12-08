@@ -165,5 +165,4 @@ export type ImportUsersFromCSVResponse = APIResponse<{
   success: number;
   failed: number;
   errors: Array<{ row: number; error: string }>;
-  users: Array<{ id: string }>;
 }>;

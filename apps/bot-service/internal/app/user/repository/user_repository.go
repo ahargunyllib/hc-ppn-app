@@ -50,6 +50,53 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
+func (r *userRepository) BulkCreate(ctx context.Context, users []entity.User) error {
+	if len(users) == 0 {
+		return nil
+	}
+
+	var qb strings.Builder
+	qb.WriteString(`
+		INSERT INTO users (id, phone_number, name, job_title, gender, date_of_birth, created_at, updated_at)
+		VALUES
+	`)
+
+	args := make([]any, 0, len(users)*8)
+	for i, user := range users {
+		if i > 0 {
+			qb.WriteString(",")
+		}
+		argPos := i * 8
+		qb.WriteString(fmt.Sprintf(
+			" ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+			argPos+1, argPos+2, argPos+3, argPos+4, argPos+5, argPos+6, argPos+7, argPos+8,
+		))
+		args = append(args, user.ID, user.PhoneNumber, user.Name, user.JobTitle, user.Gender, user.DateOfBirth, user.CreatedAt, user.UpdatedAt)
+	}
+
+	_, err := r.db.ExecContext(ctx, qb.String(), args...)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			pgErrors := []pg.PgError{
+				{
+					Code:           pg.UniqueViolation,
+					ConstraintName: "users_phone_number_key",
+					Err:            errx.ErrUserPhoneExists.WithLocation("userRepository.BulkCreate"),
+				},
+			}
+
+			if customPgErr := pg.HandlePgError(pgErr, pgErrors); customPgErr != nil {
+				return customPgErr
+			}
+		}
+
+		return errx.ErrInternalServer.WithLocation("userRepository.BulkCreate").WithError(err)
+	}
+
+	return nil
+}
+
 func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
 	query := `
 		SELECT id, phone_number, name, job_title, gender, date_of_birth, created_at, updated_at

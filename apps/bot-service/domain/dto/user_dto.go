@@ -102,11 +102,10 @@ type GetUserMetricsResponse struct {
 }
 
 type ImportUsersFromCSVResponse struct {
-	Total   int                          `json:"total"`
-	Success int                          `json:"success"`
-	Failed  int                          `json:"failed"`
-	Errors  []ImportUsersFromCSVError    `json:"errors"`
-	Users   []CreateUserResponse         `json:"users"`
+	Total   int                       `json:"total"`
+	Success int                       `json:"success"`
+	Failed  int                       `json:"failed"`
+	Errors  []ImportUsersFromCSVError `json:"errors"`
 }
 
 type ImportUsersFromCSVError struct {

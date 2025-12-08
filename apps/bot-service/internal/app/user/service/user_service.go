@@ -241,10 +241,12 @@ func (s *UserService) ImportUsersFromCSV(ctx context.Context, records [][]string
 		Success: 0,
 		Failed:  0,
 		Errors:  make([]dto.ImportUsersFromCSVError, 0),
-		Users:   make([]dto.CreateUserResponse, 0),
 	}
 
-	// Skip header row
+	// Collect valid users for bulk insert
+	validUsers := make([]entity.User, 0, len(records)-1)
+
+	// Skip header row and validate all records
 	for i := 1; i < len(records); i++ {
 		record := records[i]
 		rowNumber := i + 1 // +1 because spreadsheets start at 1
@@ -278,7 +280,7 @@ func (s *UserService) ImportUsersFromCSV(ctx context.Context, records [][]string
 			dateOfBirth = &record[4]
 		}
 
-		// Create user request
+		// Create and validate user request
 		userReq := &dto.CreateUserRequest{
 			PhoneNumber: phoneNumber,
 			Name:        name,
@@ -287,9 +289,8 @@ func (s *UserService) ImportUsersFromCSV(ctx context.Context, records [][]string
 			DateOfBirth: dateOfBirth,
 		}
 
-		// Create user
-		userRes, err := s.Create(ctx, userReq)
-		if err != nil {
+		// Validate the data
+		if err := s.validator.Validate(userReq); err != nil {
 			res.Failed++
 			res.Errors = append(res.Errors, dto.ImportUsersFromCSVError{
 				Row:   rowNumber,
@@ -298,8 +299,55 @@ func (s *UserService) ImportUsersFromCSV(ctx context.Context, records [][]string
 			continue
 		}
 
-		res.Success++
-		res.Users = append(res.Users, *userRes)
+		// Generate UUID
+		id, err := s.uuidPkg.NewV7()
+		if err != nil {
+			res.Failed++
+			res.Errors = append(res.Errors, dto.ImportUsersFromCSVError{
+				Row:   rowNumber,
+				Error: "Failed to generate UUID: " + err.Error(),
+			})
+			continue
+		}
+
+		// Parse date of birth if provided
+		var parsedDateOfBirth *time.Time
+		if dateOfBirth != nil && *dateOfBirth != "" {
+			parsedDate, err := time.Parse(time.DateOnly, *dateOfBirth)
+			if err != nil {
+				res.Failed++
+				res.Errors = append(res.Errors, dto.ImportUsersFromCSVError{
+					Row:   rowNumber,
+					Error: "Invalid date format: " + err.Error(),
+				})
+				continue
+			}
+			parsedDateOfBirth = &parsedDate
+		}
+
+		// Build user entity
+		user := entity.User{
+			ID:          id,
+			PhoneNumber: userReq.PhoneNumber,
+			Name:        userReq.Name,
+			JobTitle:    userReq.JobTitle,
+			Gender:      userReq.Gender,
+			DateOfBirth: parsedDateOfBirth,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		}
+
+		validUsers = append(validUsers, user)
+	}
+
+	// Bulk insert all valid users
+	if len(validUsers) > 0 {
+		if err := s.userRepo.BulkCreate(ctx, validUsers); err != nil {
+			return nil, errx.ErrInternalServer.WithDetails(map[string]any{
+				"error": "Failed to bulk insert users",
+			}).WithLocation("UserService.ImportUsersFromCSV").WithError(err)
+		}
+		res.Success = len(validUsers)
 	}
 
 	return res, nil
