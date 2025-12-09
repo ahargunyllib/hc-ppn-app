@@ -104,7 +104,11 @@ export function AnalyticsDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard icon={MessageSquare} title="Total Interactions" value={0} />
+        <MetricCard
+          icon={MessageSquare}
+          title="Total Feedbacks"
+          value={feedbackMetrics.payload.totalFeedbacks.toLocaleString()}
+        />
         <MetricCard
           icon={FolderOpen}
           title="Total Topics"

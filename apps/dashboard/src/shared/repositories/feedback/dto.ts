@@ -20,6 +20,7 @@ export type GetFeedbacksResponse = APIResponse<{
 
 export type GetFeedbackMetricsResponse = APIResponse<{
   satisfactionScore: number;
+  totalFeedbacks: number;
 }>;
 
 export type SatisfactionTrendData = {

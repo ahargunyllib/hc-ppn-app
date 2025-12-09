@@ -550,31 +550,43 @@ func TestFeedbackService_GetMetrics(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name               string
-		setup              func()
-		wantErr            bool
-		wantSatisfaction   float64
+		name             string
+		setup            func()
+		wantErr          bool
+		wantSatisfaction float64
+		wantTotal        int
 	}{
 		{
-			name: "success with satisfaction score",
+			name: "success with satisfaction score and total feedbacks",
 			setup: func() {
-				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(85.5, nil)
+				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(85.5, 42, nil)
 			},
-			wantErr:            false,
-			wantSatisfaction:   85.5,
+			wantErr:          false,
+			wantSatisfaction: 85.5,
+			wantTotal:        42,
 		},
 		{
-			name: "success with zero satisfaction score",
+			name: "success with zero satisfaction score and zero feedbacks",
 			setup: func() {
-				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(0.0, nil)
+				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(0.0, 0, nil)
 			},
-			wantErr:            false,
-			wantSatisfaction:   0.0,
+			wantErr:          false,
+			wantSatisfaction: 0.0,
+			wantTotal:        0,
+		},
+		{
+			name: "success with high feedback count",
+			setup: func() {
+				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(92.3, 1500, nil)
+			},
+			wantErr:          false,
+			wantSatisfaction: 92.3,
+			wantTotal:        1500,
 		},
 		{
 			name: "repository error",
 			setup: func() {
-				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(0.0, errx.ErrInternalServer)
+				mockFeedbackRepo.EXPECT().GetMetrics(ctx).Return(0.0, 0, errx.ErrInternalServer)
 			},
 			wantErr: true,
 		},
@@ -592,6 +604,7 @@ func TestFeedbackService_GetMetrics(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
 				assert.Equal(t, tt.wantSatisfaction, result.SatisfactionScore)
+				assert.Equal(t, tt.wantTotal, result.TotalFeedbacks)
 			}
 		})
 	}

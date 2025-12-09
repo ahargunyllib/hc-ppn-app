@@ -14,7 +14,7 @@ type FeedbackRepository interface {
 	Create(ctx context.Context, feedback *entity.Feedback) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Feedback, error)
 	List(ctx context.Context, filter *entity.GetFeedbacksFilter) ([]entity.Feedback, int64, error)
-	GetMetrics(ctx context.Context) (float64, error)
+	GetMetrics(ctx context.Context) (float64, int, error)
 	GetSatisfactionTrend(ctx context.Context) ([]entity.SatisfactionTrendRow, error)
 }
 

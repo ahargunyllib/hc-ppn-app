@@ -72,12 +72,13 @@ func (mr *MockFeedbackRepositoryMockRecorder) FindByID(ctx, id any) *gomock.Call
 }
 
 // GetMetrics mocks base method.
-func (m *MockFeedbackRepository) GetMetrics(ctx context.Context) (float64, error) {
+func (m *MockFeedbackRepository) GetMetrics(ctx context.Context) (float64, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMetrics", ctx)
 	ret0, _ := ret[0].(float64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetMetrics indicates an expected call of GetMetrics.
