@@ -10,11 +10,14 @@ import {
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
 import { toastManager } from "@/shared/components/ui/toast";
 import { parseAPIError } from "@/shared/lib/api-client";
 import { useImportUsersFromCSV } from "@/shared/repositories/user/query";
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function ImportCSVDialog() {
   const [file, setFile] = useState<File | null>(null);
@@ -25,6 +28,30 @@ export default function ImportCSVDialog() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const f = event.target.files?.[0];
     if (!f) {
+      return;
+    }
+
+    if (f.size > MAX_FILE_SIZE) {
+      toastManager.add({
+        type: "error",
+        title: "File too large",
+        description: "Please select a file smaller than 5MB.",
+      });
+
+      event.target.value = "";
+
+      return;
+    }
+
+    if (!f.name.endsWith(".csv")) {
+      toastManager.add({
+        type: "error",
+        title: "Invalid file type",
+        description: "Please select a valid CSV file.",
+      });
+
+      event.target.value = "";
+
       return;
     }
 
@@ -121,9 +148,11 @@ export default function ImportCSVDialog() {
             </div>
 
             <div>
+              <Label htmlFor="csvFile">Select CSV File (max 5MB)</Label>
               <Input
                 accept=".csv"
                 disabled={isPending}
+                id="csvFile"
                 onChange={handleFileChange}
                 ref={inputRef}
                 type="file"

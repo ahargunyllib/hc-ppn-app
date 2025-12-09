@@ -1,7 +1,11 @@
 package controller
 
 import (
+	"net/http"
+	"slices"
+
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/dto"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/errx"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/helpers/http/response"
 	"github.com/gofiber/fiber/v2"
 )
@@ -104,6 +108,43 @@ func (c *UserController) importCSV(ctx *fiber.Ctx) error {
 	req.File, err = ctx.FormFile("file")
 	if err != nil {
 		return err
+	}
+
+	// check mime type
+	file, err := req.File.Open()
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	const mimeDetectionBufferSize = 512
+	buffer := make([]byte, mimeDetectionBufferSize)
+	n, err := file.Read(buffer)
+	if err != nil {
+		return err
+	}
+	// reset file pointer
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	mimeType := http.DetectContentType(buffer[:n])
+	allowedMimeTypes := []string{"text/csv", "application/vnd.ms-excel", "text/plain"}
+	if !slices.Contains(allowedMimeTypes, mimeType) {
+		return errx.ErrInvalidFileExtension.WithLocation("userController.ImportCSV").WithDetails(map[string]any{
+			"expected": "text/csv or application/vnd.ms-excel",
+			"got":      mimeType,
+		})
+	}
+
+	// check file size (max 5MB)
+	const maxFileSize = 5 * 1024 * 1024 // 5MB
+	if req.File.Size > maxFileSize {
+		return errx.ErrFileSizeLimitExceeded.WithLocation("userController.ImportCSV").WithDetails(map[string]any{
+			"maxSize": maxFileSize,
+			"got":     req.File.Size,
+		})
 	}
 
 	err = c.userSvc.ImportFromCSV(ctx.Context(), &req)
