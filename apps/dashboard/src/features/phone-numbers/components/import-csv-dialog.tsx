@@ -66,51 +66,51 @@ export default function ImportCSVDialog() {
       </DialogTrigger>
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>Import Users dari CSV</DialogTitle>
+          <DialogTitle>Import Users from CSV</DialogTitle>
           <DialogDescription>
-            Upload file CSV untuk menambahkan multiple users sekaligus.
+            Upload a CSV file to add multiple users at once.
           </DialogDescription>
         </DialogHeader>
         <DialogPanel>
           <div className="flex flex-col gap-4">
             <div className="space-y-2 rounded-md border border-border bg-muted p-4">
-              <h3 className="font-semibold text-sm">Format CSV:</h3>
+              <h3 className="font-semibold text-sm">CSV Format:</h3>
               <div className="space-y-2 text-sm">
-                <p>File CSV harus memiliki kolom berikut (dengan header):</p>
+                <p>CSV file must have the following columns (with headers):</p>
                 <ul className="ml-4 list-disc space-y-1">
                   <li>
                     <code className="rounded bg-background px-1 py-0.5">
                       phoneNumber
                     </code>{" "}
-                    (wajib) - Format E.164, contoh: +6281234567890
+                    (required) - Format E.164, example: +6281234567890
                   </li>
                   <li>
                     <code className="rounded bg-background px-1 py-0.5">
                       name
                     </code>{" "}
-                    (wajib) - Nama lengkap
+                    (required) - Full name
                   </li>
                   <li>
                     <code className="rounded bg-background px-1 py-0.5">
                       jobTitle
                     </code>{" "}
-                    (opsional) - Jabatan
+                    (optional) - Job Title
                   </li>
                   <li>
                     <code className="rounded bg-background px-1 py-0.5">
                       gender
                     </code>{" "}
-                    (opsional) - male atau female
+                    (optional) - male or female
                   </li>
                   <li>
                     <code className="rounded bg-background px-1 py-0.5">
                       dateOfBirth
                     </code>{" "}
-                    (opsional) - Format: YYYY-MM-DD
+                    (optional) - Format: YYYY-MM-DD
                   </li>
                 </ul>
-                <div className="mt-3">
-                  <p className="font-semibold">Contoh:</p>
+                <div>
+                  <p className="font-semibold">Example:</p>
                   <pre className="mt-1 overflow-x-auto rounded bg-background p-2 font-mono text-xs">
                     {`phoneNumber,name,jobTitle,gender,dateOfBirth
 +6281234567890,John Doe,Software Engineer,male,1990-01-15
@@ -137,10 +137,10 @@ export default function ImportCSVDialog() {
             onClick={() => setIsOpen(false)}
             variant="outline"
           >
-            {isPending ? "Mengimpor..." : "Tutup"}
+            Close
           </Button>
           <Button disabled={isPending} onClick={onSubmitHandler}>
-            {isPending ? "Mengimpor..." : "Import"}
+            Import
           </Button>
         </DialogFooter>
       </DialogPopup>
