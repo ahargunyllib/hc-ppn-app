@@ -55,26 +55,16 @@ func (r *userRepository) BulkCreate(ctx context.Context, users []entity.User) er
 		return nil
 	}
 
-	var qb strings.Builder
-	qb.WriteString(`
+	query := `
 		INSERT INTO users (id, phone_number, name, job_title, gender, date_of_birth, created_at, updated_at)
-		VALUES
-	`)
+		VALUES (:id, :phone_number, :name, :job_title, :gender, :date_of_birth, :created_at, :updated_at)
+	`
 
-	args := make([]any, 0, len(users)*8)
-	for i, user := range users {
-		if i > 0 {
-			qb.WriteString(",")
-		}
-		argPos := i * 8
-		qb.WriteString(fmt.Sprintf(
-			" ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
-			argPos+1, argPos+2, argPos+3, argPos+4, argPos+5, argPos+6, argPos+7, argPos+8,
-		))
-		args = append(args, user.ID, user.PhoneNumber, user.Name, user.JobTitle, user.Gender, user.DateOfBirth, user.CreatedAt, user.UpdatedAt)
-	}
-
-	_, err := r.db.ExecContext(ctx, qb.String(), args...)
+	_, err := r.db.NamedExecContext(
+		ctx,
+		query,
+		users,
+	)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
