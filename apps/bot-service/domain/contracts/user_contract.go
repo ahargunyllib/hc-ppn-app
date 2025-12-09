@@ -12,6 +12,7 @@ import (
 
 type UserRepository interface {
 	Create(ctx context.Context, user *entity.User) error
+	BulkCreate(ctx context.Context, users []entity.User) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
 	FindByPhoneNumber(ctx context.Context, phoneNumber string) (*entity.User, error)
 	List(ctx context.Context, filter *entity.GetUsersFilter) ([]entity.User, int64, error)
@@ -30,4 +31,5 @@ type UserService interface {
 	Delete(ctx context.Context, param *dto.DeleteUserParam) error
 	GetAllPhoneNumbers(ctx context.Context) (*dto.GetAllPhoneNumbersResponse, error)
 	GetMetrics(ctx context.Context) (*dto.GetUserMetricsResponse, error)
+	ImportFromCSV(ctx context.Context, req *dto.ImportUsersFromCSVRequest) error
 }

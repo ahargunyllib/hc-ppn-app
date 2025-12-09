@@ -17,6 +17,14 @@ func (r *RequestError) Error() string {
 	return r.Message
 }
 
+func (r *RequestError) Is(target error) bool {
+	t, ok := target.(*RequestError)
+	if !ok {
+		return false
+	}
+	return r.StatusCode == t.StatusCode && r.ErrorCode == t.ErrorCode && r.Message == t.Message
+}
+
 func NewError(statusCode int, errorCode string, message string) *RequestError {
 	return &RequestError{
 		StatusCode: statusCode,

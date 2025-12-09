@@ -10,6 +10,7 @@ import (
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/entity"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/errx"
 	userRepoMock "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/repository/mock"
+	mockCSV "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/csv/mock"
 	mockUUID "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/uuid/mock"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/validator"
 	mockValidator "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/validator/mock"
@@ -25,8 +26,9 @@ func TestUserService_Create(t *testing.T) {
 	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
 	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
 	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+	mockCSV := mockCSV.NewMockCustomCSVInterface(ctrl)
 
-	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID, mockCSV)
 	ctx := context.Background()
 
 	testID := uuid.New()
@@ -150,8 +152,9 @@ func TestUserService_GetByID(t *testing.T) {
 	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
 	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
 	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+	mockCSV := mockCSV.NewMockCustomCSVInterface(ctrl)
 
-	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID, mockCSV)
 	ctx := context.Background()
 
 	testID := uuid.New()
@@ -251,8 +254,9 @@ func TestUserService_GetByPhoneNumber(t *testing.T) {
 	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
 	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
 	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+	mockCSV := mockCSV.NewMockCustomCSVInterface(ctrl)
 
-	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID, mockCSV)
 	ctx := context.Background()
 
 	testID := uuid.New()
@@ -340,8 +344,9 @@ func TestUserService_List(t *testing.T) {
 	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
 	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
 	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+	mockCSV := mockCSV.NewMockCustomCSVInterface(ctrl)
 
-	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID, mockCSV)
 	ctx := context.Background()
 
 	testUsers := []entity.User{
@@ -505,8 +510,9 @@ func TestUserService_Update(t *testing.T) {
 	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
 	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
 	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+	mockCSV := mockCSV.NewMockCustomCSVInterface(ctrl)
 
-	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID, mockCSV)
 	ctx := context.Background()
 
 	testID := uuid.New()
@@ -723,8 +729,9 @@ func TestUserService_Delete(t *testing.T) {
 	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
 	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
 	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+	mockCSV := mockCSV.NewMockCustomCSVInterface(ctrl)
 
-	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID, mockCSV)
 	ctx := context.Background()
 
 	testID := uuid.New()
@@ -812,8 +819,9 @@ func TestUserService_GetAllPhoneNumbers(t *testing.T) {
 	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
 	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
 	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+	mockCSV := mockCSV.NewMockCustomCSVInterface(ctrl)
 
-	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID, mockCSV)
 	ctx := context.Background()
 
 	testPhoneNumbers := []string{"+1234567890", "+0987654321", "+1122334455"}
@@ -881,8 +889,9 @@ func TestUserService_GetMetrics(t *testing.T) {
 	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
 	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
 	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+	mockCSV := mockCSV.NewMockCustomCSVInterface(ctrl)
 
-	service := NewUserService(mockUserRepo, mockValidator, mockUUID)
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID, mockCSV)
 	ctx := context.Background()
 
 	tests := []struct {
@@ -941,6 +950,260 @@ func TestUserService_GetMetrics(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
 				assert.Equal(t, tt.wantTotalUsers, result.TotalUsers)
+			}
+		})
+	}
+}
+
+func TestUserService_ImportFromCSV(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := userRepoMock.NewMockUserRepository(ctrl)
+	mockValidator := mockValidator.NewMockCustomValidatorInterface(ctrl)
+	mockUUID := mockUUID.NewMockUUIDInterface(ctrl)
+	mockCSV := mockCSV.NewMockCustomCSVInterface(ctrl)
+
+	service := NewUserService(mockUserRepo, mockValidator, mockUUID, mockCSV)
+	ctx := context.Background()
+
+	testID1 := uuid.New()
+	testID2 := uuid.New()
+
+	tests := []struct {
+		name    string
+		req     *dto.ImportUsersFromCSVRequest
+		setup   func()
+		wantErr bool
+		errType error
+	}{
+		{
+			name: "success - valid CSV with all fields",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"+1234567890", "John Doe", "Software Engineer", "male", "1990-01-15"},
+					{"+0987654321", "Jane Smith", "Product Manager", "female", "1985-05-20"},
+				}, nil)
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil).Times(2)
+				mockUUID.EXPECT().NewV7().Return(testID1, nil)
+				mockUUID.EXPECT().NewV7().Return(testID2, nil)
+				mockUserRepo.EXPECT().BulkCreate(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, users []entity.User) error {
+					assert.Len(t, users, 2)
+					assert.Equal(t, "+1234567890", users[0].PhoneNumber)
+					assert.Equal(t, "John Doe", users[0].Name)
+					assert.Equal(t, "Software Engineer", *users[0].JobTitle)
+					assert.Equal(t, "male", *users[0].Gender)
+					assert.NotNil(t, users[0].DateOfBirth)
+					assert.NotNil(t, users[0].CreatedAt)
+					assert.NotNil(t, users[0].UpdatedAt)
+					return nil
+				})
+			},
+			wantErr: false,
+		},
+		{
+			name: "success - valid CSV with optional fields empty",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"+1234567890", "John Doe", "", "", ""},
+				}, nil)
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockUUID.EXPECT().NewV7().Return(testID1, nil)
+				mockUserRepo.EXPECT().BulkCreate(ctx, gomock.Any()).DoAndReturn(func(ctx context.Context, users []entity.User) error {
+					assert.Len(t, users, 1)
+					assert.Equal(t, "+1234567890", users[0].PhoneNumber)
+					assert.Equal(t, "John Doe", users[0].Name)
+					assert.Nil(t, users[0].JobTitle)
+					assert.Nil(t, users[0].Gender)
+					assert.Nil(t, users[0].DateOfBirth)
+					return nil
+				})
+			},
+			wantErr: false,
+		},
+		{
+			name: "validation error - empty CSV file",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{}, nil)
+			},
+			wantErr: true,
+			errType: errx.ErrEmptyCSVFile,
+		},
+		{
+			name: "validation error - only header no data rows",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+				}, nil)
+			},
+			wantErr: true,
+			errType: errx.ErrCSVNoData,
+		},
+		{
+			name: "validation error - wrong number of columns in header",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name"},
+					{"+1234567890", "John Doe"},
+				}, nil)
+			},
+			wantErr: true,
+			errType: errx.ErrInvalidCSVStructure,
+		},
+		{
+			name: "validation error - wrong number of columns in data row",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"+1234567890", "John Doe"},
+				}, nil)
+			},
+			wantErr: true,
+			errType: errx.ErrInvalidCSVRow,
+		},
+		{
+			name: "validation error - missing phone number",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"", "John Doe", "", "", ""},
+				}, nil)
+			},
+			wantErr: true,
+			errType: errx.ErrMissingPhoneNumber,
+		},
+		{
+			name: "validation error - missing name",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"+1234567890", "", "", "", ""},
+				}, nil)
+			},
+			wantErr: true,
+			errType: errx.ErrMissingName,
+		},
+		{
+			name: "validation error - invalid phone number format",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"12345", "John Doe", "", "", ""},
+				}, nil)
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(validator.ValidationErrors{
+					"body.phone_number": validator.ValidationError{
+						Message: "phone_number must be in E.164 format",
+					},
+				})
+			},
+			wantErr: true,
+			errType: errx.ErrInvalidPhoneNumber,
+		},
+		{
+			name: "validation error - invalid gender",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"+1234567890", "John Doe", "", "other", ""},
+				}, nil)
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockUUID.EXPECT().NewV7().Return(testID1, nil)
+			},
+			wantErr: true,
+			errType: errx.ErrInvalidGender,
+		},
+		{
+			name: "validation error - invalid date format",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"+1234567890", "John Doe", "", "", "01/15/1990"},
+				}, nil)
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockUUID.EXPECT().NewV7().Return(testID1, nil)
+			},
+			wantErr: true,
+			errType: errx.ErrInvalidDateFormat,
+		},
+		{
+			name: "repository error - duplicate phone number",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"+1234567890", "John Doe", "", "", ""},
+				}, nil)
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockUUID.EXPECT().NewV7().Return(testID1, nil)
+				mockUserRepo.EXPECT().BulkCreate(ctx, gomock.Any()).Return(errx.ErrUserPhoneExists)
+			},
+			wantErr: true,
+			errType: errx.ErrUserPhoneExists,
+		},
+		{
+			name: "csv parsing error",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return(nil, errors.New("malformed csv"))
+			},
+			wantErr: true,
+			errType: errx.ErrInternalServer,
+		},
+		{
+			name: "uuid generation error",
+			req:  &dto.ImportUsersFromCSVRequest{},
+			setup: func() {
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockCSV.EXPECT().ParseFileHeader(gomock.Any()).Return([][]string{
+					{"phone_number", "name", "job_title", "gender", "date_of_birth"},
+					{"+1234567890", "John Doe", "", "", ""},
+				}, nil)
+				mockValidator.EXPECT().Validate(gomock.Any()).Return(nil)
+				mockUUID.EXPECT().NewV7().Return(uuid.Nil, errors.New("uuid generation failed"))
+			},
+			wantErr: true,
+			errType: errx.ErrInternalServer,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			err := service.ImportFromCSV(ctx, tt.req)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errType != nil {
+					assert.ErrorIs(t, err, tt.errType)
+				}
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

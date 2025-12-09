@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"mime/multipart"
 	"time"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/entity"
@@ -99,4 +100,8 @@ type GetAllPhoneNumbersResponse struct {
 
 type GetUserMetricsResponse struct {
 	TotalUsers int `json:"totalUsers"`
+}
+
+type ImportUsersFromCSVRequest struct {
+	File *multipart.FileHeader // manually set and validate
 }

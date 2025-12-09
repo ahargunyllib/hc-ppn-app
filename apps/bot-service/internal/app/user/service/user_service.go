@@ -234,3 +234,143 @@ func (s *UserService) GetMetrics(ctx context.Context) (*dto.GetUserMetricsRespon
 
 	return res, nil
 }
+
+func (s *UserService) ImportFromCSV(ctx context.Context, req *dto.ImportUsersFromCSVRequest) error {
+	if err := s.validator.Validate(req); err != nil {
+		return err
+	}
+
+	records, err := s.csvPkg.ParseFileHeader(req.File)
+	if err != nil {
+		return errx.ErrInternalServer.WithLocation("UserService.ImportFromCSV").WithError(err)
+	}
+
+	// Validate CSV is not empty
+	if len(records) == 0 {
+		return errx.ErrEmptyCSVFile.WithLocation("UserService.ImportFromCSV")
+	}
+
+	// Validate header row exists and has correct columns
+	if len(records) < 2 {
+		return errx.ErrCSVNoData.WithLocation("UserService.ImportFromCSV")
+	}
+
+	header := records[0]
+	expectedColumns := 5
+	if len(header) != expectedColumns {
+		return errx.ErrInvalidCSVStructure.
+			WithLocation("UserService.ImportFromCSV").
+			WithDetails(map[string]any{
+				"expected": expectedColumns,
+				"got":      len(header),
+			})
+	}
+
+	users := make([]entity.User, 0, len(records)-1)
+	now := time.Now()
+
+	for idx, record := range records {
+		// skip header
+		if idx == 0 {
+			continue
+		}
+
+		// Validate record has correct number of columns
+		if len(record) != expectedColumns {
+			return errx.ErrInvalidCSVRow.
+				WithLocation("UserService.ImportFromCSV").
+				WithDetails(map[string]any{
+					"row":      idx + 1,
+					"expected": expectedColumns,
+					"got":      len(record),
+				})
+		}
+
+		phoneNumber := record[0]
+		name := record[1]
+
+		// Validate required fields
+		if phoneNumber == "" {
+			return errx.ErrMissingPhoneNumber.
+				WithLocation("UserService.ImportFromCSV").
+				WithDetails(map[string]any{"row": idx + 1})
+		}
+		if name == "" {
+			return errx.ErrMissingName.
+				WithLocation("UserService.ImportFromCSV").
+				WithDetails(map[string]any{"row": idx + 1})
+		}
+
+		// Validate phone number format using the same validator
+		phoneValidationErr := s.validator.Validate(&dto.CreateUserRequest{
+			PhoneNumber: phoneNumber,
+			Name:        name,
+		})
+		if phoneValidationErr != nil {
+			return errx.ErrInvalidPhoneNumber.
+				WithLocation("UserService.ImportFromCSV").
+				WithDetails(map[string]any{
+					"row":         idx + 1,
+					"phoneNumber": phoneNumber,
+				}).
+				WithError(phoneValidationErr)
+		}
+
+		id, err := s.uuidPkg.NewV7()
+		if err != nil {
+			return errx.ErrInternalServer.WithLocation("UserService.ImportFromCSV").WithError(err)
+		}
+
+		var jobTitle *string
+		if record[2] != "" {
+			jobTitle = &record[2]
+		}
+
+		var gender *string
+		if record[3] != "" {
+			genderValue := record[3]
+			// Validate gender value
+			if genderValue != "male" && genderValue != "female" {
+				return errx.ErrInvalidGender.
+					WithLocation("UserService.ImportFromCSV").
+					WithDetails(map[string]any{
+						"row":    idx + 1,
+						"gender": genderValue,
+					})
+			}
+			gender = &genderValue
+		}
+
+		var dateOfBirth *time.Time
+		if record[4] != "" {
+			parsedDate, err := time.Parse(time.DateOnly, record[4])
+			if err != nil {
+				return errx.ErrInvalidDateFormat.WithDetails(map[string]any{
+					"row":            idx + 1,
+					"dateOfBirth":    record[4],
+					"expectedFormat": "YYYY-MM-DD",
+				}).WithLocation("UserService.ImportFromCSV").WithError(err)
+			}
+			dateOfBirth = &parsedDate
+		}
+
+		user := entity.User{
+			ID:          id,
+			PhoneNumber: phoneNumber,
+			Name:        name,
+			JobTitle:    jobTitle,
+			Gender:      gender,
+			DateOfBirth: dateOfBirth,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+
+		users = append(users, user)
+	}
+
+	if err := s.userRepo.BulkCreate(ctx, users); err != nil {
+		return err
+	}
+
+	return nil
+}

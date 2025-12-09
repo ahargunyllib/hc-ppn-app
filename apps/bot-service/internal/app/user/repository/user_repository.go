@@ -50,6 +50,43 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
+func (r *userRepository) BulkCreate(ctx context.Context, users []entity.User) error {
+	if len(users) == 0 {
+		return nil
+	}
+
+	query := `
+		INSERT INTO users (id, phone_number, name, job_title, gender, date_of_birth, created_at, updated_at)
+		VALUES (:id, :phone_number, :name, :job_title, :gender, :date_of_birth, :created_at, :updated_at)
+	`
+
+	_, err := r.db.NamedExecContext(
+		ctx,
+		query,
+		users,
+	)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			pgErrors := []pg.PgError{
+				{
+					Code:           pg.UniqueViolation,
+					ConstraintName: "users_phone_number_key",
+					Err:            errx.ErrUserPhoneExists.WithLocation("userRepository.BulkCreate"),
+				},
+			}
+
+			if customPgErr := pg.HandlePgError(pgErr, pgErrors); customPgErr != nil {
+				return customPgErr
+			}
+		}
+
+		return errx.ErrInternalServer.WithLocation("userRepository.BulkCreate").WithError(err)
+	}
+
+	return nil
+}
+
 func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
 	query := `
 		SELECT id, phone_number, name, job_title, gender, date_of_birth, created_at, updated_at
