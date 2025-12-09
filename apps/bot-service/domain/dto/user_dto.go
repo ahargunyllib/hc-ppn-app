@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"mime/multipart"
 	"time"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/entity"
@@ -101,14 +102,6 @@ type GetUserMetricsResponse struct {
 	TotalUsers int `json:"totalUsers"`
 }
 
-type ImportUsersFromCSVResponse struct {
-	Total   int                       `json:"total"`
-	Success int                       `json:"success"`
-	Failed  int                       `json:"failed"`
-	Errors  []ImportUsersFromCSVError `json:"errors"`
-}
-
-type ImportUsersFromCSVError struct {
-	Row   int    `json:"row"`
-	Error string `json:"error"`
+type ImportUsersFromCSVRequest struct {
+	File *multipart.FileHeader // manually set and validate
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/repository"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/service"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/middlewares"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/csv"
 	errorhandler "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/helpers/http/error_handler"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/helpers/http/response"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/jwt"
@@ -80,6 +81,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	jwtService := jwt.Jwt
 	validatorService := validator.Validator
 	uuidService := uuid.UUID
+	csv := csv.CSV
 
 	middleware := middlewares.NewMiddleware(jwtService)
 
@@ -95,7 +97,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	})
 
 	userRepo := repository.NewUserRepository(db)
-	userService := service.NewUserService(userRepo, validatorService, uuidService)
+	userService := service.NewUserService(userRepo, validatorService, uuidService, csv)
 	controller.InitUserController(v1, userService, middleware)
 
 	feedbackRepo := feedbackrepository.NewFeedbackRepository(db)

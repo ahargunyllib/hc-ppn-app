@@ -2,6 +2,7 @@ import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogPanel,
   DialogPopup,
@@ -13,59 +14,39 @@ import { toastManager } from "@/shared/components/ui/toast";
 import { parseAPIError } from "@/shared/lib/api-client";
 import { useImportUsersFromCSV } from "@/shared/repositories/user/query";
 import { Upload } from "lucide-react";
-import { useState } from "react";
-
-type ImportResult = {
-  total: number;
-  success: number;
-  failed: number;
-  errors: Array<{ row: number; error: string }>;
-};
+import { useRef, useState } from "react";
 
 export default function ImportCSVDialog() {
+  const [file, setFile] = useState<File | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [result, setResult] = useState<ImportResult | null>(null);
-
   const { mutate, isPending } = useImportUsersFromCSV();
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const f = event.target.files?.[0];
+    if (!f) {
       return;
     }
 
-    setResult(null);
+    setFile(f);
+  };
+
+  const onSubmitHandler = () => {
+    if (!file) {
+      toastManager.add({
+        type: "error",
+        title: "No file selected",
+        description: "Please select a CSV file to import.",
+      });
+      return;
+    }
 
     mutate(file, {
-      onSuccess: (data) => {
-        const importResult: ImportResult = {
-          total: data.payload.total,
-          success: data.payload.success,
-          failed: data.payload.failed,
-          errors: data.payload.errors,
-        };
-
-        setResult(importResult);
-
-        // Show summary toast
-        if (importResult.failed === 0) {
-          toastManager.add({
-            type: "success",
-            title: "Import berhasil",
-            description: `${importResult.success} user berhasil diimpor.`,
-          });
-        } else {
-          toastManager.add({
-            type: "warning",
-            title: "Import selesai dengan error",
-            description: `${importResult.success} berhasil, ${importResult.failed} gagal.`,
-          });
-        }
-
-        // Reset file input
-        event.target.value = "";
+      onSuccess: () => {
+        toastManager.add({
+          type: "success",
+          title: "CSV imported successfully",
+        });
       },
       onError: (error) => {
         toastManager.add({
@@ -73,22 +54,14 @@ export default function ImportCSVDialog() {
           title: "Gagal mengimpor CSV",
           description: parseAPIError(error),
         });
-        event.target.value = "";
       },
     });
   };
 
-  const handleClose = () => {
-    if (!isPending) {
-      setIsOpen(false);
-      setResult(null);
-    }
-  };
-
   return (
-    <Dialog onOpenChange={handleClose} open={isOpen}>
+    <Dialog onOpenChange={setIsOpen} open={isOpen}>
       <DialogTrigger render={<Button size="sm" variant="outline" />}>
-        <Upload className="mr-2 h-4 w-4" />
+        <Upload />
         Import CSV
       </DialogTrigger>
       <DialogPopup>
@@ -100,9 +73,8 @@ export default function ImportCSVDialog() {
         </DialogHeader>
         <DialogPanel>
           <div className="flex flex-col gap-4">
-            {/* Format Instructions */}
-            <div className="rounded-md border border-border bg-muted p-4">
-              <h3 className="mb-2 font-semibold text-sm">Format CSV:</h3>
+            <div className="space-y-2 rounded-md border border-border bg-muted p-4">
+              <h3 className="font-semibold text-sm">Format CSV:</h3>
               <div className="space-y-2 text-sm">
                 <p>File CSV harus memiliki kolom berikut (dengan header):</p>
                 <ul className="ml-4 list-disc space-y-1">
@@ -148,59 +120,29 @@ export default function ImportCSVDialog() {
               </div>
             </div>
 
-            {/* File Input */}
             <div>
               <Input
                 accept=".csv"
                 disabled={isPending}
                 onChange={handleFileChange}
+                ref={inputRef}
                 type="file"
               />
             </div>
-
-            {/* Progress */}
-            {isPending && (
-              <div className="rounded-md border border-border bg-muted p-3">
-                <p className="text-sm">Mengimpor data...</p>
-              </div>
-            )}
-
-            {/* Results */}
-            {result && (
-              <div className="space-y-2">
-                <div className="rounded-md border border-border bg-muted p-3">
-                  <h4 className="mb-2 font-semibold text-sm">
-                    Hasil Import:
-                  </h4>
-                  <div className="space-y-1 text-sm">
-                    <p>Total: {result.total} baris</p>
-                    <p className="text-green-600">Berhasil: {result.success}</p>
-                    <p className="text-red-600">Gagal: {result.failed}</p>
-                  </div>
-                </div>
-
-                {result.errors.length > 0 && (
-                  <div className="rounded-md border border-red-200 bg-red-50 p-3">
-                    <h4 className="mb-2 font-semibold text-red-800 text-sm">
-                      Error Details:
-                    </h4>
-                    <div className="max-h-40 space-y-1 overflow-y-auto text-sm">
-                      {result.errors.map((error, idx) => (
-                        <p className="text-red-700" key={idx}>
-                          Baris {error.row}: {error.error}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <Button disabled={isPending} onClick={handleClose}>
-              {isPending ? "Mengimpor..." : "Tutup"}
-            </Button>
           </div>
         </DialogPanel>
+        <DialogFooter>
+          <Button
+            disabled={isPending}
+            onClick={() => setIsOpen(false)}
+            variant="outline"
+          >
+            {isPending ? "Mengimpor..." : "Tutup"}
+          </Button>
+          <Button disabled={isPending} onClick={onSubmitHandler}>
+            {isPending ? "Mengimpor..." : "Import"}
+          </Button>
+        </DialogFooter>
       </DialogPopup>
     </Dialog>
   );

@@ -235,120 +235,142 @@ func (s *UserService) GetMetrics(ctx context.Context) (*dto.GetUserMetricsRespon
 	return res, nil
 }
 
-func (s *UserService) ImportUsersFromCSV(ctx context.Context, records [][]string) (*dto.ImportUsersFromCSVResponse, error) {
-	res := &dto.ImportUsersFromCSVResponse{
-		Total:   len(records) - 1, // Exclude header row
-		Success: 0,
-		Failed:  0,
-		Errors:  make([]dto.ImportUsersFromCSVError, 0),
+func (s *UserService) ImportFromCSV(ctx context.Context, req *dto.ImportUsersFromCSVRequest) error {
+	if err := s.validator.Validate(req); err != nil {
+		return err
 	}
 
-	// Collect valid users for bulk insert
-	validUsers := make([]entity.User, 0, len(records)-1)
+	records, err := s.csvPkg.ParseFileHeader(req.File)
+	if err != nil {
+		return errx.ErrInternalServer.WithLocation("UserService.ImportFromCSV").WithError(err)
+	}
 
-	// Skip header row and validate all records
-	for i := 1; i < len(records); i++ {
-		record := records[i]
-		rowNumber := i + 1 // +1 because spreadsheets start at 1
+	// Validate CSV is not empty
+	if len(records) == 0 {
+		return errx.ErrEmptyCSVFile.WithLocation("UserService.ImportFromCSV")
+	}
 
-		// Check if row has the correct number of columns (at least 2 for phoneNumber and name)
-		if len(record) < 2 {
-			res.Failed++
-			res.Errors = append(res.Errors, dto.ImportUsersFromCSVError{
-				Row:   rowNumber,
-				Error: "Invalid row format: missing required columns",
+	// Validate header row exists and has correct columns
+	if len(records) < 2 {
+		return errx.ErrCSVNoData.WithLocation("UserService.ImportFromCSV")
+	}
+
+	header := records[0]
+	expectedColumns := 5
+	if len(header) != expectedColumns {
+		return errx.ErrInvalidCSVStructure.
+			WithLocation("UserService.ImportFromCSV").
+			WithDetails(map[string]any{
+				"expected": expectedColumns,
+				"got":      len(header),
 			})
+	}
+
+	users := make([]entity.User, 0, len(records)-1)
+	now := time.Now()
+
+	for idx, record := range records {
+		// skip header
+		if idx == 0 {
 			continue
 		}
 
-		// Parse CSV columns (phoneNumber, name, jobTitle, gender, dateOfBirth)
+		// Validate record has correct number of columns
+		if len(record) != expectedColumns {
+			return errx.ErrInvalidCSVRow.
+				WithLocation("UserService.ImportFromCSV").
+				WithDetails(map[string]any{
+					"row":      idx + 1,
+					"expected": expectedColumns,
+					"got":      len(record),
+				})
+		}
+
 		phoneNumber := record[0]
 		name := record[1]
 
+		// Validate required fields
+		if phoneNumber == "" {
+			return errx.ErrMissingPhoneNumber.
+				WithLocation("UserService.ImportFromCSV").
+				WithDetails(map[string]any{"row": idx + 1})
+		}
+		if name == "" {
+			return errx.ErrMissingName.
+				WithLocation("UserService.ImportFromCSV").
+				WithDetails(map[string]any{"row": idx + 1})
+		}
+
+		// Validate phone number format using the same validator
+		phoneValidationErr := s.validator.Validate(&dto.CreateUserRequest{
+			PhoneNumber: phoneNumber,
+			Name:        name,
+		})
+		if phoneValidationErr != nil {
+			return errx.ErrInvalidPhoneNumber.
+				WithLocation("UserService.ImportFromCSV").
+				WithDetails(map[string]any{
+					"row":         idx + 1,
+					"phoneNumber": phoneNumber,
+				}).
+				WithError(phoneValidationErr)
+		}
+
+		id, err := s.uuidPkg.NewV7()
+		if err != nil {
+			return errx.ErrInternalServer.WithLocation("UserService.ImportFromCSV").WithError(err)
+		}
+
 		var jobTitle *string
-		if len(record) > 2 && record[2] != "" {
+		if record[2] != "" {
 			jobTitle = &record[2]
 		}
 
 		var gender *string
-		if len(record) > 3 && record[3] != "" {
-			gender = &record[3]
+		if record[3] != "" {
+			genderValue := record[3]
+			// Validate gender value
+			if genderValue != "male" && genderValue != "female" {
+				return errx.ErrInvalidGender.
+					WithLocation("UserService.ImportFromCSV").
+					WithDetails(map[string]any{
+						"row":    idx + 1,
+						"gender": genderValue,
+					})
+			}
+			gender = &genderValue
 		}
 
-		var dateOfBirth *string
-		if len(record) > 4 && record[4] != "" {
-			dateOfBirth = &record[4]
+		var dateOfBirth *time.Time
+		if record[4] != "" {
+			parsedDate, err := time.Parse(time.DateOnly, record[4])
+			if err != nil {
+				return errx.ErrInvalidDateFormat.WithDetails(map[string]any{
+					"row":            idx + 1,
+					"dateOfBirth":    record[4],
+					"expectedFormat": "YYYY-MM-DD",
+				}).WithLocation("UserService.ImportFromCSV").WithError(err)
+			}
+			dateOfBirth = &parsedDate
 		}
 
-		// Create and validate user request
-		userReq := &dto.CreateUserRequest{
+		user := entity.User{
+			ID:          id,
 			PhoneNumber: phoneNumber,
 			Name:        name,
 			JobTitle:    jobTitle,
 			Gender:      gender,
 			DateOfBirth: dateOfBirth,
+			CreatedAt:   now,
+			UpdatedAt:   now,
 		}
 
-		// Validate the data
-		if err := s.validator.Validate(userReq); err != nil {
-			res.Failed++
-			res.Errors = append(res.Errors, dto.ImportUsersFromCSVError{
-				Row:   rowNumber,
-				Error: err.Error(),
-			})
-			continue
-		}
-
-		// Generate UUID
-		id, err := s.uuidPkg.NewV7()
-		if err != nil {
-			res.Failed++
-			res.Errors = append(res.Errors, dto.ImportUsersFromCSVError{
-				Row:   rowNumber,
-				Error: "Failed to generate UUID: " + err.Error(),
-			})
-			continue
-		}
-
-		// Parse date of birth if provided
-		var parsedDateOfBirth *time.Time
-		if dateOfBirth != nil && *dateOfBirth != "" {
-			parsedDate, err := time.Parse(time.DateOnly, *dateOfBirth)
-			if err != nil {
-				res.Failed++
-				res.Errors = append(res.Errors, dto.ImportUsersFromCSVError{
-					Row:   rowNumber,
-					Error: "Invalid date format: " + err.Error(),
-				})
-				continue
-			}
-			parsedDateOfBirth = &parsedDate
-		}
-
-		// Build user entity
-		user := entity.User{
-			ID:          id,
-			PhoneNumber: userReq.PhoneNumber,
-			Name:        userReq.Name,
-			JobTitle:    userReq.JobTitle,
-			Gender:      userReq.Gender,
-			DateOfBirth: parsedDateOfBirth,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		}
-
-		validUsers = append(validUsers, user)
+		users = append(users, user)
 	}
 
-	// Bulk insert all valid users
-	if len(validUsers) > 0 {
-		if err := s.userRepo.BulkCreate(ctx, validUsers); err != nil {
-			return nil, errx.ErrInternalServer.WithDetails(map[string]any{
-				"error": "Failed to bulk insert users",
-			}).WithLocation("UserService.ImportUsersFromCSV").WithError(err)
-		}
-		res.Success = len(validUsers)
+	if err := s.userRepo.BulkCreate(ctx, users); err != nil {
+		return err
 	}
 
-	return res, nil
+	return nil
 }

@@ -159,10 +159,3 @@ export type UpdateUserRequest = z.infer<typeof UpdateUserSchema>;
 export type GetUserMetricsResponse = APIResponse<{
   totalUsers: number;
 }>;
-
-export type ImportUsersFromCSVResponse = APIResponse<{
-  total: number;
-  success: number;
-  failed: number;
-  errors: Array<{ row: number; error: string }>;
-}>;

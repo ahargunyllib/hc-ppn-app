@@ -31,4 +31,5 @@ type UserService interface {
 	Delete(ctx context.Context, param *dto.DeleteUserParam) error
 	GetAllPhoneNumbers(ctx context.Context) (*dto.GetAllPhoneNumbersResponse, error)
 	GetMetrics(ctx context.Context) (*dto.GetUserMetricsResponse, error)
+	ImportFromCSV(ctx context.Context, req *dto.ImportUsersFromCSVRequest) error
 }

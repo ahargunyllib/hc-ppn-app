@@ -14,7 +14,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import DeletePhoneNumberDialog from "./delete-phone-number-dialog";
-import EditPhoneNumberDialog from './edit-phone-number-dialog';
+import EditPhoneNumberDialog from "./edit-phone-number-dialog";
 
 type PhoneNumbersTableProps = {
   data: User[];

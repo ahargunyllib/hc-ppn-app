@@ -13,6 +13,7 @@ import (
 	feedbackService "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/service"
 	userRepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/repository"
 	userService "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/service"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/csv"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/dify"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/uuid"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/validator"
@@ -71,6 +72,7 @@ func NewWhatsAppBot(ctx context.Context, db *sql.DB, sqlxDB *sqlx.DB) (*WhatsApp
 
 	validator := validator.Validator
 	uuid := uuid.UUID
+	csv := csv.CSV
 
 	clientLog := waLog.Stdout("Client", "INFO", true)
 	client := whatsmeow.NewClient(deviceStore, clientLog)
@@ -79,7 +81,7 @@ func NewWhatsAppBot(ctx context.Context, db *sql.DB, sqlxDB *sqlx.DB) (*WhatsApp
 	userRepo := userRepository.NewUserRepository(sqlxDB)
 
 	feedbackSvc := feedbackService.NewFeedbackService(feedbackRepo, validator, uuid)
-	userSvc := userService.NewUserService(userRepo, validator, uuid)
+	userSvc := userService.NewUserService(userRepo, validator, uuid, csv)
 
 	bot := &WhatsAppBot{
 		ctx:         ctx,

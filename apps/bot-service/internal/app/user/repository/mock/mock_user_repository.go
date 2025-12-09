@@ -42,6 +42,20 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 	return m.recorder
 }
 
+// BulkCreate mocks base method.
+func (m *MockUserRepository) BulkCreate(ctx context.Context, users []entity.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BulkCreate", ctx, users)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BulkCreate indicates an expected call of BulkCreate.
+func (mr *MockUserRepositoryMockRecorder) BulkCreate(ctx, users any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkCreate", reflect.TypeOf((*MockUserRepository)(nil).BulkCreate), ctx, users)
+}
+
 // Create mocks base method.
 func (m *MockUserRepository) Create(ctx context.Context, user *entity.User) error {
 	m.ctrl.T.Helper()
