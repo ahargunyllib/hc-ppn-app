@@ -14,13 +14,24 @@ import {
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useGetFeedbacks } from "@/shared/repositories/feedback/query";
 import { useState } from "react";
+import { FeedbackFilters } from "./components/feedback-filters";
 import { FeedbackTable } from "./components/feedback-table";
 
 export function FeedbackDashboard() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [selectedRatings, setSelectedRatings] = useState<number[]>([]);
 
-  const { data, isLoading, error } = useGetFeedbacks({ page, limit });
+  const { data, isLoading, error } = useGetFeedbacks({
+    page,
+    limit,
+    ratings: selectedRatings.length > 0 ? selectedRatings : undefined,
+  });
+
+  const handleRatingsChange = (ratings: number[]) => {
+    setSelectedRatings(ratings);
+    setPage(1);
+  };
 
   if (isLoading) {
     return (
@@ -58,6 +69,12 @@ export function FeedbackDashboard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        <div className="flex items-center justify-end">
+          <FeedbackFilters
+            onRatingsChange={handleRatingsChange}
+            selectedRatings={selectedRatings}
+          />
+        </div>
         <FeedbackTable data={data?.payload.feedbacks || []} />
         <DataPagination
           currentLimit={limit}

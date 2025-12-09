@@ -6,6 +6,7 @@ export type GetFeedbacksQuery = {
   page?: number;
   limit?: number;
   userId?: string;
+  ratings?: number[];
   minRating?: number;
   maxRating?: number;
 };
