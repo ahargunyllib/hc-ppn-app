@@ -64,6 +64,7 @@ type GetFeedbackByIDResponse struct {
 
 type GetFeedbackMetricsResponse struct {
 	SatisfactionScore float64 `json:"satisfactionScore"`
+	TotalFeedbacks    int     `json:"totalFeedbacks"`
 }
 
 type SatisfactionTrendData struct {

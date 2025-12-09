@@ -168,23 +168,27 @@ func (r *feedbackRepository) List(ctx context.Context, filter *entity.GetFeedbac
 	return feedbacks, total, nil
 }
 
-func (r *feedbackRepository) GetMetrics(ctx context.Context) (float64, error) {
+func (r *feedbackRepository) GetMetrics(ctx context.Context) (float64, int, error) {
 	query := `
 		SELECT
 			COALESCE(
 				(SUM(rating) * 100.0) / NULLIF(COUNT(*) * 5, 0),
 				0
-			) AS satisfaction_score
+			) AS satisfaction_score,
+			COUNT(*) AS total_feedbacks
 		FROM feedbacks
 	`
 
-	var satisfactionScore float64
-	err := r.db.GetContext(ctx, &satisfactionScore, query)
+	var result struct {
+		SatisfactionScore float64 `db:"satisfaction_score"`
+		TotalFeedbacks    int     `db:"total_feedbacks"`
+	}
+	err := r.db.GetContext(ctx, &result, query)
 	if err != nil {
-		return 0, errx.ErrInternalServer.WithLocation("feedbackRepository.GetMetrics").WithError(err)
+		return 0, 0, errx.ErrInternalServer.WithLocation("feedbackRepository.GetMetrics").WithError(err)
 	}
 
-	return satisfactionScore, nil
+	return result.SatisfactionScore, result.TotalFeedbacks, nil
 }
 
 func (r *feedbackRepository) GetSatisfactionTrend(ctx context.Context) ([]entity.SatisfactionTrendRow, error) {
