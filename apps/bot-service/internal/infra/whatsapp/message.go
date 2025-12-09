@@ -76,9 +76,10 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 			"user_id":      userRes.User.ID,
 		}, "[WhatsAppBot] Starting new session for authorized phone number")
 
-		session = s.createSession(phoneNumber, &chatJID)
+		session = s.createSession(phoneNumber, &chatJID, &userRes.User)
 		greeting := getTimeBasedGreeting(getJakartaTime())
-		welcomeMessage := fmt.Sprintf("%s! 👋\n\nSelamat datang di *Layanan WhatsApp HC PPN*\n\nSaya adalah asisten virtual yang siap membantu Anda dengan pertanyaan seputar layanan kami.\n\nAda yang bisa saya bantu hari ini?", greeting)
+		personalizedGreeting := formatUserGreeting(&userRes.User, greeting)
+		welcomeMessage := fmt.Sprintf("%s 👋\n\nSelamat datang di *Layanan WhatsApp HC PPN*\n\nSaya adalah asisten virtual yang siap membantu Anda dengan pertanyaan seputar layanan kami.\n\nAda yang bisa saya bantu hari ini?", personalizedGreeting)
 		s.sendMessage(chatJID, welcomeMessage)
 		return
 	}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/contracts"
+	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/dto"
 	feedbackRepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/repository"
 	feedbackService "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/feedback/service"
 	userRepository "github.com/ahargunyllib/hc-ppn-app/apps/bot-service/internal/app/user/repository"
@@ -54,6 +55,7 @@ type Session struct {
 	FeedbackPromptSentAt *time.Time
 	IsAutoPrompt         bool
 	ChatJID              *types.JID
+	User                 *dto.UserResponse // Store user data for personalization
 }
 
 func NewWhatsAppBot(ctx context.Context, db *sql.DB, sqlxDB *sqlx.DB) (*WhatsAppBot, error) {
