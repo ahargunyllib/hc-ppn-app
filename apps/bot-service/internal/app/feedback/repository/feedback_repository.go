@@ -121,14 +121,23 @@ func (r *feedbackRepository) List(ctx context.Context, filter *entity.GetFeedbac
 		args = append(args, *filter.UserID)
 	}
 
-	if filter.MinRating != nil {
-		whereClauses.WriteString(fmt.Sprintf(" AND rating >= $%d", len(args)+1))
-		args = append(args, *filter.MinRating)
-	}
+	if len(filter.Ratings) > 0 {
+		placeholders := make([]string, len(filter.Ratings))
+		for i, rating := range filter.Ratings {
+			placeholders[i] = fmt.Sprintf("$%d", len(args)+1)
+			args = append(args, rating)
+		}
+		whereClauses.WriteString(fmt.Sprintf(" AND rating IN (%s)", strings.Join(placeholders, ",")))
+	} else {
+		if filter.MinRating != nil {
+			whereClauses.WriteString(fmt.Sprintf(" AND rating >= $%d", len(args)+1))
+			args = append(args, *filter.MinRating)
+		}
 
-	if filter.MaxRating != nil {
-		whereClauses.WriteString(fmt.Sprintf(" AND rating <= $%d", len(args)+1))
-		args = append(args, *filter.MaxRating)
+		if filter.MaxRating != nil {
+			whereClauses.WriteString(fmt.Sprintf(" AND rating <= $%d", len(args)+1))
+			args = append(args, *filter.MaxRating)
+		}
 	}
 
 	var total int64

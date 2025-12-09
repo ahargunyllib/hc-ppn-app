@@ -20,6 +20,7 @@ type GetFeedbacksFilter struct {
 	Offset    int
 	Limit     int
 	UserID    *uuid.UUID
+	Ratings   []int
 	MinRating *int
 	MaxRating *int
 }

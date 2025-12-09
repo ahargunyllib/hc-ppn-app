@@ -95,6 +95,7 @@ func (s *FeedbackService) List(ctx context.Context, query *dto.GetFeedbacksQuery
 		Offset:    (page - 1) * limit,
 		Limit:     limit,
 		UserID:    userID,
+		Ratings:   query.Ratings,
 		MinRating: query.MinRating,
 		MaxRating: query.MaxRating,
 	}

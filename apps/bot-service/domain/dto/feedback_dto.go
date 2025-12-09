@@ -42,6 +42,7 @@ type GetFeedbacksQuery struct {
 	Page      int     `query:"page" validate:"omitempty,min=1"`
 	Limit     int     `query:"limit" validate:"omitempty,min=1,max=100"`
 	UserID    *string `query:"userId" validate:"omitempty,uuid"`
+	Ratings   []int   `query:"ratings" validate:"omitempty,dive,min=1,max=5"`
 	MinRating *int    `query:"minRating" validate:"omitempty,min=1,max=5"`
 	MaxRating *int    `query:"maxRating" validate:"omitempty,min=1,max=5"`
 }
