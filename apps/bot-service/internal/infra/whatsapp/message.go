@@ -3,8 +3,10 @@ package whatsapp
 import (
 	"context"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/dto"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/dify"
@@ -221,7 +223,44 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 	}, "[WhatsAppBot] Feedback received and saved")
 }
 
+// simulateTyping sends a typing indicator and waits for a realistic delay based on message length
+func (s *WhatsAppBot) simulateTyping(chatJID types.JID, messageText string) {
+	// Send typing presence
+	err := s.client.SendChatPresence(chatJID, types.ChatPresenceComposing, types.ChatPresenceMediaText)
+	if err != nil {
+		s.clientLog.Warnf("Failed to send typing presence: %v", err)
+	}
+
+	// Calculate realistic typing delay based on message length
+	// Average human typing speed: 40 WPM ≈ 200 characters per minute ≈ 300ms per character
+	// We'll use a faster rate (150ms per char) + base delay to feel responsive but human
+	const baseDelayMs = 800
+	const msPerChar = 15
+
+	messageLength := len([]rune(messageText))
+	calculatedDelay := baseDelayMs + (messageLength * msPerChar)
+
+	// Cap the maximum delay to avoid long waits (max 4 seconds)
+	const maxDelayMs = 4000
+	delay := math.Min(float64(calculatedDelay), maxDelayMs)
+
+	// Minimum delay of 500ms to ensure typing indicator is visible
+	const minDelayMs = 500
+	delay = math.Max(delay, minDelayMs)
+
+	time.Sleep(time.Duration(delay) * time.Millisecond)
+
+	// Stop typing presence
+	err = s.client.SendChatPresence(chatJID, types.ChatPresencePaused, types.ChatPresenceMediaText)
+	if err != nil {
+		s.clientLog.Warnf("Failed to send paused presence: %v", err)
+	}
+}
+
 func (s *WhatsAppBot) sendReply(msg *events.Message, text string) {
+	// Simulate typing before sending the reply
+	s.simulateTyping(msg.Info.Chat, text)
+
 	_, err := s.client.SendMessage(s.ctx, msg.Info.Chat, &waE2E.Message{
 		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text: proto.String(text),
@@ -238,6 +277,9 @@ func (s *WhatsAppBot) sendReply(msg *events.Message, text string) {
 }
 
 func (s *WhatsAppBot) sendMessage(to types.JID, text string) {
+	// Simulate typing before sending the message
+	s.simulateTyping(to, text)
+
 	_, err := s.client.SendMessage(s.ctx, to, &waE2E.Message{
 		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text: proto.String(text),
