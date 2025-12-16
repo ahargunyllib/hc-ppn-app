@@ -3,8 +3,10 @@ package whatsapp
 import (
 	"context"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/domain/dto"
 	"github.com/ahargunyllib/hc-ppn-app/apps/bot-service/pkg/dify"
@@ -77,6 +79,10 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		}, "[WhatsAppBot] Starting new session for authorized phone number")
 
 		session = s.createSession(phoneNumber, &chatJID, &userRes.User)
+
+		// Mark message as read (blue ticks) before welcoming
+		s.markMessageAsRead(msg)
+
 		greeting := getTimeBasedGreeting(getJakartaTime())
 		personalizedGreeting := formatUserGreeting(&userRes.User, greeting)
 		welcomeMessage := fmt.Sprintf("%s 👋\n\nSelamat datang di *Layanan WhatsApp HC PPN*\n\nSaya adalah asisten virtual yang siap membantu Anda dengan pertanyaan seputar layanan kami.\n\nAda yang bisa saya bantu hari ini?", personalizedGreeting)
@@ -104,11 +110,38 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		return
 	}
 
-	s.updateSessionActivity(phoneNumber)
+	// Rate limiting: prevent spam
+	s.sessionsMux.Lock()
+
+	// 1. Rapid message detection: block messages < 3 seconds apart
+	if len(session.MessageHistory) > 0 {
+		lastMsgTime := session.MessageHistory[len(session.MessageHistory)-1]
+		timeSinceLastMsg := time.Since(lastMsgTime)
+		if timeSinceLastMsg < 3*time.Second {
+			s.sessionsMux.Unlock()
+			s.sendReply(msg, "Mohon tunggu sebentar sebelum mengirim pesan berikutnya 🙏")
+			return
+		}
+	}
+
+	// 2. Sliding window counter: max 20 messages per 10 minutes
+	const maxMessagesInWindow = 20
+	const windowDuration = 10 * time.Minute
+
+	now := time.Now()
+	session.MessageHistory = filterRecentMessages(session.MessageHistory, now, windowDuration)
+
+	if len(session.MessageHistory) >= maxMessagesInWindow {
+		s.sessionsMux.Unlock()
+		s.sendReply(msg, "Anda telah mencapai batas maksimal pesan (20 pesan per 10 menit). Mohon tunggu beberapa saat 🙏")
+		return
+	}
+
+	// Add current message to history
+	session.MessageHistory = append(session.MessageHistory, now)
 
 	// Reset feedback prompt if user continues conversation
 	// This prevents auto-close when user is actively engaging
-	s.sessionsMux.Lock()
 	if session.FeedbackPromptSent {
 		session.FeedbackPromptSent = false
 		session.FeedbackPromptSentAt = nil
@@ -116,8 +149,12 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 	}
 	s.sessionsMux.Unlock()
 
+	s.updateSessionActivity(phoneNumber)
+
 	difyReq := &dify.Request{
-		Inputs:         make(map[string]any),
+		Inputs: map[string]any{
+			"user": session.User,
+		},
 		Query:          text,
 		ResponseMode:   "blocking",
 		ConversationID: session.ConversationID,
@@ -221,7 +258,52 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 	}, "[WhatsAppBot] Feedback received and saved")
 }
 
+// markMessageAsRead marks a message as read (sends blue tick receipt)
+func (s *WhatsAppBot) markMessageAsRead(msg *events.Message) {
+	err := s.client.MarkRead(s.ctx, []types.MessageID{msg.Info.ID}, msg.Info.Timestamp, msg.Info.Chat, msg.Info.Sender)
+	if err != nil {
+		s.clientLog.Warnf("Failed to mark message as read: %v", err)
+	}
+}
+
+// simulateTyping sends a typing indicator and waits for a realistic delay based on message length
+func (s *WhatsAppBot) simulateTyping(chatJID types.JID, messageText string) {
+	// Send typing presence
+	err := s.client.SendChatPresence(s.ctx, chatJID, types.ChatPresenceComposing, types.ChatPresenceMediaText)
+	if err != nil {
+		s.clientLog.Warnf("Failed to send typing presence: %v", err)
+	}
+
+	const baseDelayMs = 800
+	const msPerChar = 50 // ~50ms per char approximates faster-than-human but realistic typing
+
+	messageLength := len([]rune(messageText))
+	calculatedDelay := baseDelayMs + (messageLength * msPerChar)
+
+	// Cap the maximum delay to avoid long waits (max 4 seconds)
+	const maxDelayMs = 4000
+	delay := math.Min(float64(calculatedDelay), maxDelayMs)
+
+	// Minimum delay of 500ms to ensure typing indicator is visible
+	const minDelayMs = 500
+	delay = math.Max(delay, minDelayMs)
+
+	time.Sleep(time.Duration(delay) * time.Millisecond)
+
+	// Stop typing presence
+	err = s.client.SendChatPresence(s.ctx, chatJID, types.ChatPresencePaused, types.ChatPresenceMediaText)
+	if err != nil {
+		s.clientLog.Warnf("Failed to send paused presence: %v", err)
+	}
+}
+
 func (s *WhatsAppBot) sendReply(msg *events.Message, text string) {
+	// Mark message as read (blue ticks)
+	s.markMessageAsRead(msg)
+
+	// Simulate typing before sending the reply
+	s.simulateTyping(msg.Info.Chat, text)
+
 	_, err := s.client.SendMessage(s.ctx, msg.Info.Chat, &waE2E.Message{
 		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text: proto.String(text),
@@ -238,6 +320,9 @@ func (s *WhatsAppBot) sendReply(msg *events.Message, text string) {
 }
 
 func (s *WhatsAppBot) sendMessage(to types.JID, text string) {
+	// Simulate typing before sending the message
+	s.simulateTyping(to, text)
+
 	_, err := s.client.SendMessage(s.ctx, to, &waE2E.Message{
 		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text: proto.String(text),
