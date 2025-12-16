@@ -79,6 +79,10 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		}, "[WhatsAppBot] Starting new session for authorized phone number")
 
 		session = s.createSession(phoneNumber, &chatJID, &userRes.User)
+
+		// Mark message as read (blue ticks) before welcoming
+		s.markMessageAsRead(msg)
+
 		greeting := getTimeBasedGreeting(getJakartaTime())
 		personalizedGreeting := formatUserGreeting(&userRes.User, greeting)
 		welcomeMessage := fmt.Sprintf("%s 👋\n\nSelamat datang di *Layanan WhatsApp HC PPN*\n\nSaya adalah asisten virtual yang siap membantu Anda dengan pertanyaan seputar layanan kami.\n\nAda yang bisa saya bantu hari ini?", personalizedGreeting)
@@ -252,6 +256,14 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 	}, "[WhatsAppBot] Feedback received and saved")
 }
 
+// markMessageAsRead marks a message as read (sends blue tick receipt)
+func (s *WhatsAppBot) markMessageAsRead(msg *events.Message) {
+	err := s.client.MarkRead(s.ctx, []string{msg.Info.ID}, msg.Info.Timestamp, msg.Info.Chat, msg.Info.Sender)
+	if err != nil {
+		s.clientLog.Warnf("Failed to mark message as read: %v", err)
+	}
+}
+
 // simulateTyping sends a typing indicator and waits for a realistic delay based on message length
 func (s *WhatsAppBot) simulateTyping(chatJID types.JID, messageText string) {
 	// Send typing presence
@@ -287,6 +299,9 @@ func (s *WhatsAppBot) simulateTyping(chatJID types.JID, messageText string) {
 }
 
 func (s *WhatsAppBot) sendReply(msg *events.Message, text string) {
+	// Mark message as read (blue ticks)
+	s.markMessageAsRead(msg)
+
 	// Simulate typing before sending the reply
 	s.simulateTyping(msg.Info.Chat, text)
 
