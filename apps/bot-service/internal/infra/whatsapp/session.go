@@ -210,7 +210,7 @@ func filterRecentMessages(messages []time.Time, now time.Time, window time.Durat
 	result := make([]time.Time, 0, len(messages))
 
 	for _, msgTime := range messages {
-		if msgTime.After(cutoff) {
+		if !msgTime.Before(cutoff) {
 			result = append(result, msgTime)
 		}
 	}
