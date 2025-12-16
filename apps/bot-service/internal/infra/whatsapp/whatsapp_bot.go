@@ -42,6 +42,9 @@ type WhatsAppBot struct {
 	userSvc     contracts.UserService
 	sessions    map[string]*Session
 	sessionsMux sync.RWMutex
+
+	isOfflineSyncing    bool
+	isOfflineSyncingMux sync.RWMutex
 }
 
 type Session struct {
@@ -140,6 +143,13 @@ func (s *WhatsAppBot) Stop() {
 func (s *WhatsAppBot) eventHandler(evt any) {
 	switch v := evt.(type) {
 	case *events.Message:
+		s.isOfflineSyncingMux.RLock()
+		syncing := s.isOfflineSyncing
+		s.isOfflineSyncingMux.RUnlock()
+		if syncing {
+			return
+		}
+
 		go s.handleMessage(v)
 	case *events.Connected:
 		s.clientLog.Infof("WhatsApp bot connected successfully")
@@ -149,5 +159,21 @@ func (s *WhatsAppBot) eventHandler(evt any) {
 		s.clientLog.Warnf("WhatsApp bot logged out. Please scan QR code again on next restart")
 	case *events.StreamReplaced:
 		s.clientLog.Warnf("WhatsApp bot stream replaced (logged in from another location)")
+	case *events.HistorySync:
+		s.clientLog.Infof("WhatsApp bot history sync completed: %d%%", *v.Data.Progress)
+	case *events.OfflineSyncPreview:
+		s.isOfflineSyncingMux.Lock()
+		s.isOfflineSyncing = true
+		s.isOfflineSyncingMux.Unlock()
+
+		s.clientLog.Infof("WhatsApp bot offline sync preview received: %d messages, %d notifications, %d receipts, %d app data changes, %d total", v.Messages, v.Notifications, v.Receipts, v.AppDataChanges, v.Total)
+	case *events.OfflineSyncCompleted:
+		s.isOfflineSyncingMux.Lock()
+		s.isOfflineSyncing = false
+		s.isOfflineSyncingMux.Unlock()
+
+		s.clientLog.Infof("WhatsApp bot offline sync completed: %d count", v.Count)
+	default:
+		s.clientLog.Debugf("Unhandled event: %T", v)
 	}
 }
