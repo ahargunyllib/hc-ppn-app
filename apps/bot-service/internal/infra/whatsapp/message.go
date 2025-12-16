@@ -226,7 +226,7 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 // simulateTyping sends a typing indicator and waits for a realistic delay based on message length
 func (s *WhatsAppBot) simulateTyping(chatJID types.JID, messageText string) {
 	// Send typing presence
-	err := s.client.SendChatPresence(chatJID, types.ChatPresenceComposing, types.ChatPresenceMediaText)
+	err := s.client.SendChatPresence(s.ctx, chatJID, types.ChatPresenceComposing, types.ChatPresenceMediaText)
 	if err != nil {
 		s.clientLog.Warnf("Failed to send typing presence: %v", err)
 	}
@@ -251,7 +251,7 @@ func (s *WhatsAppBot) simulateTyping(chatJID types.JID, messageText string) {
 	time.Sleep(time.Duration(delay) * time.Millisecond)
 
 	// Stop typing presence
-	err = s.client.SendChatPresence(chatJID, types.ChatPresencePaused, types.ChatPresenceMediaText)
+	err = s.client.SendChatPresence(s.ctx, chatJID, types.ChatPresencePaused, types.ChatPresenceMediaText)
 	if err != nil {
 		s.clientLog.Warnf("Failed to send paused presence: %v", err)
 	}
