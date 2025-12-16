@@ -152,7 +152,9 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 	s.updateSessionActivity(phoneNumber)
 
 	difyReq := &dify.Request{
-		Inputs:         make(map[string]any),
+		Inputs: map[string]any{
+			"user": session.User,
+		},
 		Query:          text,
 		ResponseMode:   "blocking",
 		ConversationID: session.ConversationID,
