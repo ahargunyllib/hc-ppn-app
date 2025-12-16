@@ -203,3 +203,17 @@ func (s *WhatsAppBot) deleteSession(phoneNumber string) {
 
 	delete(s.sessions, phoneNumber)
 }
+
+// filterRecentMessages removes messages outside the specified time window
+func filterRecentMessages(messages []time.Time, now time.Time, window time.Duration) []time.Time {
+	cutoff := now.Add(-window)
+	result := make([]time.Time, 0, len(messages))
+
+	for _, msgTime := range messages {
+		if msgTime.After(cutoff) {
+			result = append(result, msgTime)
+		}
+	}
+
+	return result
+}

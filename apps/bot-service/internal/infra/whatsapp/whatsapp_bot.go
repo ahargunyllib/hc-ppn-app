@@ -59,6 +59,7 @@ type Session struct {
 	IsAutoPrompt         bool
 	ChatJID              *types.JID
 	User                 *dto.UserResponse // Store user data for personalization
+	MessageHistory       []time.Time       // Track message times for rate limiting
 }
 
 func NewWhatsAppBot(ctx context.Context, db *sql.DB, sqlxDB *sqlx.DB) (*WhatsAppBot, error) {
