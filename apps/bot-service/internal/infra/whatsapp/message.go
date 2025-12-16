@@ -274,11 +274,8 @@ func (s *WhatsAppBot) simulateTyping(chatJID types.JID, messageText string) {
 		s.clientLog.Warnf("Failed to send typing presence: %v", err)
 	}
 
-	// Calculate realistic typing delay based on message length
-	// Average human typing speed: 40 WPM ≈ 200 characters per minute ≈ 300ms per character
-	// We'll use a faster rate (150ms per char) + base delay to feel responsive but human
 	const baseDelayMs = 800
-	const msPerChar = 15
+	const msPerChar = 50  // ~50ms per char approximates faster-than-human but realistic typing
 
 	messageLength := len([]rune(messageText))
 	calculatedDelay := baseDelayMs + (messageLength * msPerChar)
