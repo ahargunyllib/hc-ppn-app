@@ -260,7 +260,7 @@ func (s *WhatsAppBot) handleCommentInput(msg *events.Message, phoneNumber string
 
 // markMessageAsRead marks a message as read (sends blue tick receipt)
 func (s *WhatsAppBot) markMessageAsRead(msg *events.Message) {
-	err := s.client.MarkRead(s.ctx, []string{msg.Info.ID}, msg.Info.Timestamp, msg.Info.Chat, msg.Info.Sender)
+	err := s.client.MarkRead(s.ctx, []types.MessageID{msg.Info.ID}, msg.Info.Timestamp, msg.Info.Chat, msg.Info.Sender)
 	if err != nil {
 		s.clientLog.Warnf("Failed to mark message as read: %v", err)
 	}
@@ -275,7 +275,7 @@ func (s *WhatsAppBot) simulateTyping(chatJID types.JID, messageText string) {
 	}
 
 	const baseDelayMs = 800
-	const msPerChar = 50  // ~50ms per char approximates faster-than-human but realistic typing
+	const msPerChar = 50 // ~50ms per char approximates faster-than-human but realistic typing
 
 	messageLength := len([]rune(messageText))
 	calculatedDelay := baseDelayMs + (messageLength * msPerChar)
