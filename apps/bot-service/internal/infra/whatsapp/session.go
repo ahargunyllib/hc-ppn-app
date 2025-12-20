@@ -101,13 +101,8 @@ func (s *WhatsAppBot) processExpiredSessions() {
 
 			// Collect action to perform
 			greeting := getTimeBasedGreeting(getJakartaTime())
-			salutation := getSalutation(nil) // Default to Bapak/Ibu
-			name := ""
-			if session.User != nil {
-				salutation = getSalutation(session.User.Gender)
-				name = " " + session.User.Name
-			}
-			feedbackMessage := fmt.Sprintf("%s, %s%s, untuk meningkatkan kualitas pelayanan kami, mohon dibantu penilaiannya 🙏🏻\n\nApabila berkenan, mohon kesediaan %s untuk memberikan feedback terhadap kualitas pelayanan kami dengan rating 1-5.\n\nAdapun 3 poin penilaian sebagai berikut:\n1. Kecepatan dalam merespon pertanyaan/keluhan\n2. Kualitas komunikasi dan informasi yang diberikan\n3. Ketepatan dan kegunaan solusi yang diberikan\n\nUntuk memberikan feedback, silakan ketik /selesai\n\n⏱️ *Catatan:* Jika tidak ada respons dalam 5 menit, kami akan mencatat feedback Anda sebagai rating 5 bintang sebagai bentuk kepuasan terhadap layanan kami.", greeting, salutation, name, salutation)
+			salutation := getSalutation(session.User.Gender)
+			feedbackMessage := fmt.Sprintf("%s, %s %s, untuk meningkatkan kualitas pelayanan kami, mohon dibantu penilaiannya 🙏🏻\n\nSilakan ketik /selesai untuk memberikan feedback.\n\n⏱️ *Catatan:* Jika tidak ada respons dalam 5 menit, kami akan mencatat feedback Anda sebagai rating 5 bintang.", greeting, salutation, session.User.Name)
 
 			actions = append(actions, sessionAction{
 				actionType:  "send_prompt",
