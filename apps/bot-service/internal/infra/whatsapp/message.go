@@ -193,7 +193,14 @@ func (s *WhatsAppBot) handleEndSession(msg *events.Message, session *Session) {
 	session.WaitingForRating = true
 	s.sessionsMux.Unlock()
 
-	s.sendReply(msg, "*[Langkah 1/2]* ⭐\n\nTerima kasih telah menggunakan layanan kami! 🙏\n\nSilakan berikan rating Anda (1-5):\n\n*Skala Penilaian:*\n1 = Sangat Tidak Memuaskan\n2 = Tidak Memuaskan\n3 = Cukup Memuaskan\n4 = Memuaskan\n5 = Sangat Memuaskan")
+	salutation := getSalutation(nil)
+	if session.User != nil {
+		salutation = getSalutation(session.User.Gender)
+	}
+
+	ratingMessage := fmt.Sprintf("*[Langkah 1/2]* ⭐\n\nTerima kasih telah menggunakan layanan kami! 🙏\n\nMohon kesediaan %s untuk memberikan feedback terhadap kualitas pelayanan kami dengan rating 1-5.\n\nAdapun 3 poin penilaian sebagai berikut:\n1. Kecepatan dalam merespon pertanyaan/keluhan\n2. Kualitas komunikasi dan informasi yang diberikan\n3. Ketepatan dan kegunaan solusi yang diberikan\n\nSilakan berikan rating Anda (1-5):\n\n*Skala Penilaian:*\n1 = Sangat Tidak Memuaskan\n2 = Tidak Memuaskan\n3 = Cukup Memuaskan\n4 = Memuaskan\n5 = Sangat Memuaskan", salutation)
+
+	s.sendReply(msg, ratingMessage)
 }
 
 func (s *WhatsAppBot) handleRatingInput(msg *events.Message, text string, session *Session) {
