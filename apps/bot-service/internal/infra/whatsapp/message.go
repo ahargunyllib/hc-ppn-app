@@ -84,8 +84,8 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		s.markMessageAsRead(msg)
 
 		greeting := getTimeBasedGreeting(getJakartaTime())
-		personalizedGreeting := formatUserGreeting(&userRes.User, greeting)
-		welcomeMessage := fmt.Sprintf("%s 👋\n\nSelamat datang di *Layanan WhatsApp HC PPN*\n\nSaya adalah asisten virtual yang siap membantu Anda dengan pertanyaan seputar layanan kami.\n\nAda yang bisa saya bantu hari ini?", personalizedGreeting)
+		salutation := getSalutation(userRes.User.Gender)
+		welcomeMessage := fmt.Sprintf("Halo, %s %s %s 👋\nSaya DIGDAYA (Digital Guide for Development & Your Acceleration), teman digital Anda di HC PPN Regional Jatimbalinus.\nButuh info seputar pengelolaan SDM, coaching, learning atau yang lainnya?\nSampaikan saja, saya siap membantu %s.", greeting, salutation, userRes.User.Name, salutation)
 		s.sendMessage(chatJID, welcomeMessage)
 		return
 	}
@@ -193,7 +193,14 @@ func (s *WhatsAppBot) handleEndSession(msg *events.Message, session *Session) {
 	session.WaitingForRating = true
 	s.sessionsMux.Unlock()
 
-	s.sendReply(msg, "*[Langkah 1/2]* ⭐\n\nTerima kasih telah menggunakan layanan kami! 🙏\n\nSilakan berikan rating Anda (1-5):\n\n*Skala Penilaian:*\n1 = Sangat Tidak Memuaskan\n2 = Tidak Memuaskan\n3 = Cukup Memuaskan\n4 = Memuaskan\n5 = Sangat Memuaskan")
+	salutation := getSalutation(nil)
+	if session.User != nil {
+		salutation = getSalutation(session.User.Gender)
+	}
+
+	ratingMessage := fmt.Sprintf("*[Langkah 1/2]* ⭐\n\nTerima kasih telah menggunakan layanan kami! 🙏\n\nMohon kesediaan %s untuk memberikan feedback terhadap kualitas pelayanan kami dengan rating 1-5.\n\nAdapun 3 poin penilaian sebagai berikut:\n1. Kecepatan dalam merespon pertanyaan/keluhan\n2. Kualitas komunikasi dan informasi yang diberikan\n3. Ketepatan dan kegunaan solusi yang diberikan\n\nSilakan berikan rating Anda (1-5):\n\n*Skala Penilaian:*\n1 = Sangat Tidak Memuaskan\n2 = Tidak Memuaskan\n3 = Cukup Memuaskan\n4 = Memuaskan\n5 = Sangat Memuaskan", salutation)
+
+	s.sendReply(msg, ratingMessage)
 }
 
 func (s *WhatsAppBot) handleRatingInput(msg *events.Message, text string, session *Session) {
