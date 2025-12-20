@@ -84,8 +84,8 @@ func (s *WhatsAppBot) handleMessage(msg *events.Message) {
 		s.markMessageAsRead(msg)
 
 		greeting := getTimeBasedGreeting(getJakartaTime())
-		personalizedGreeting := formatUserGreeting(&userRes.User, greeting)
-		welcomeMessage := fmt.Sprintf("%s 👋\n\nSelamat datang di *Layanan WhatsApp HC PPN*\n\nSaya adalah asisten virtual yang siap membantu Anda dengan pertanyaan seputar layanan kami.\n\nAda yang bisa saya bantu hari ini?", personalizedGreeting)
+		salutation := getSalutation(userRes.User.Gender)
+		welcomeMessage := fmt.Sprintf("Halo, %s %s %s 👋\nSaya DIGDAYA (Digital Guide for Development & Your Acceleration), teman digital Anda di HC PPN Regional Jatimbalinus.\nButuh info seputar pengelolaan SDM, coaching, learning atau yang lainnya?\nSampaikan saja, saya siap membantu %s.", greeting, salutation, userRes.User.Name, salutation)
 		s.sendMessage(chatJID, welcomeMessage)
 		return
 	}
